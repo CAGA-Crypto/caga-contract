@@ -33,13 +33,13 @@ contract X_Core is Initializable, OwnableUpgradeable, UUPSUpgradeable, Core_Stat
 		emit Deposit(msg.value);
 	}
 
-	function request_withdraw(uint256 value) external {
-		if (value > address(this).balance) {
-			require(_state.withdraw_contract.balance >= value, "insufficient funds in withdraw contract");
-			i_ls_token(_state.ls_token_contract).transferFrom(address(msg.sender), address(this), value);
-			i_withdraw(_state.withdraw_contract).withdraw(payable(address(msg.sender)), value);
+	function request_withdraw(uint256 amount) external {
+		if (amount > address(this).balance) {
+			require(_state.withdraw_contract.balance >= amount, "insufficient funds in withdraw contract");
+			i_ls_token(_state.ls_token_contract).burnFrom(address(msg.sender), amount);
+			i_withdraw(_state.withdraw_contract).withdraw(payable(address(msg.sender)), amount);
 		}
 
-		emit WithdrawRequest(value);
+		emit WithdrawRequest(amount);
 	}
 }

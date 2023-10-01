@@ -5,4 +5,8 @@ interface i_ls_token {
 	function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
 
 	function mint(address to, uint256 amount) external;
+
+	function burn(uint256 amount) external;
+
+	function burnFrom(address account, uint256 amount) external;
 }
