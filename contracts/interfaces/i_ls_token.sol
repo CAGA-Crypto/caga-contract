@@ -9,4 +9,8 @@ interface i_ls_token {
 	function burn(uint256 amount) external;
 
 	function burnFrom(address account, uint256 amount) external;
+
+	function balanceOf(address account) external view returns (uint256);
+
+	function totalSupply() external view returns (uint256);
 }

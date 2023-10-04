@@ -3,16 +3,20 @@
 pragma solidity ^0.8.9;
 
 contract Storage {
+	struct Contracts {
+		address ls_token;
+		address withdraw;
+	}
+
 	struct Withdrawals {
 		mapping(address => uint256) withdraw_account;
 		uint256 withdraw_total;
 	}
 
 	struct State {
-		address ls_token_contract;
-		address withdraw_contract;
+		Contracts contracts;
+		uint256 total_deposits;
 		Withdrawals withdrawals;
-		bool paused;
 	}
 }
 

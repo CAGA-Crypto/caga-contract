@@ -7,7 +7,7 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
-contract X_LS_Token is Initializable, ERC20Upgradeable, ERC20BurnableUpgradeable, OwnableUpgradeable, UUPSUpgradeable {
+contract xETH is Initializable, ERC20Upgradeable, ERC20BurnableUpgradeable, OwnableUpgradeable, UUPSUpgradeable {
 	address public protocol;
 
 	/// @custom:oz-upgrades-unsafe-allow constructor
@@ -16,7 +16,7 @@ contract X_LS_Token is Initializable, ERC20Upgradeable, ERC20BurnableUpgradeable
 	}
 
 	function initialize() public initializer {
-		__ERC20_init("X LS", "XLS");
+		__ERC20_init("xETH", "xETH");
 		__ERC20Burnable_init();
 		__Ownable_init();
 		__UUPSUpgradeable_init();
