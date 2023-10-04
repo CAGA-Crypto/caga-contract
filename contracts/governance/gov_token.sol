@@ -11,7 +11,8 @@ contract xGov is Initializable, ERC20Upgradeable, ERC20BurnableUpgradeable, Owna
 	address public protocol;
 
 	/// @custom:oz-upgrades-unsafe-allow constructor
-	constructor() {
+	constructor(address protocol_) {
+		protocol = protocol_;
 		_disableInitializers();
 	}
 

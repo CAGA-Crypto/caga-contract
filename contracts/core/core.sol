@@ -4,12 +4,13 @@ pragma solidity ^0.8.9;
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 import "./core_state.sol";
 import "../interfaces/i_ls_token.sol";
 import "../interfaces/i_withdraw.sol";
 
-contract X_Core is Initializable, OwnableUpgradeable, UUPSUpgradeable, Core_State {
+contract X_Core is Initializable, OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuard, Core_State {
 	/// @custom:oz-upgrades-unsafe-allow constructor
 	constructor() {
 		_disableInitializers();
@@ -27,7 +28,7 @@ contract X_Core is Initializable, OwnableUpgradeable, UUPSUpgradeable, Core_Stat
 
 	function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
-	function deposit() external payable {
+	function deposit() external payable nonReentrant {
 		require(msg.value > 0, "deposit must be greater than 0");
 
 		// calculate the amount of ls tokens to mint based on the current exchange rate
@@ -47,7 +48,7 @@ contract X_Core is Initializable, OwnableUpgradeable, UUPSUpgradeable, Core_Stat
 		emit Deposit(msg.value);
 	}
 
-	function request_withdraw(uint256 amount) external {
+	function request_withdraw(uint256 amount) external nonReentrant {
 		require(amount > 0, "withdraw amount must be greater than 0");
 		require(i_ls_token(_state.contracts.ls_token).balanceOf(address(msg.sender)) >= amount, "insufficient balance");
 

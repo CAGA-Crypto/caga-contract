@@ -5,7 +5,7 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
-contract X_Core is Initializable, OwnableUpgradeable, UUPSUpgradeable {
+contract X_Withdraw is Initializable, OwnableUpgradeable, UUPSUpgradeable {
 	address public protocol;
 
 	/// @custom:oz-upgrades-unsafe-allow constructor
