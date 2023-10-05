@@ -11,6 +11,7 @@ contract Storage {
 	struct Withdrawals {
 		mapping(address => uint256) withdraw_account;
 		uint256 withdraw_total;
+		uint256 unstaked_validators;
 	}
 
 	struct State {
