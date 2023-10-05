@@ -126,4 +126,6 @@ contract X_Core is Initializable, OwnableUpgradeable, UUPSUpgradeable, Reentranc
 
 		emit WithdrawRewards(rewards);
 	}
+
+	function stake_validator() external onlyOwner {}
 }
