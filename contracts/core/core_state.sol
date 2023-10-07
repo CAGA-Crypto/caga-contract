@@ -17,6 +17,7 @@ contract Storage {
 	struct State {
 		Contracts contracts;
 		uint256 total_deposits;
+		uint256 distributed_rewards;
 		Withdrawals withdrawals;
 	}
 }

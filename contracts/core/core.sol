@@ -19,10 +19,11 @@ contract X_Core is Initializable, OwnableUpgradeable, UUPSUpgradeable, Reentranc
 	}
 
 	event Deposit(uint256 amount);
-	event WithdrawRequest(uint256 amount);
-	event WithdrawClaim(uint256 amount);
-	event UnstakeValidator(uint256 full_amount, uint256 shortfall);
-	event WithdrawRewards(uint256 amount);
+	event Withdraw_Request(uint256 amount);
+	event Withdraw_Claim(uint256 amount);
+	event Unstake_Validator(uint256 full_amount, uint256 shortfall, uint256 validators_to_unstake);
+	event Withdraw_Unstaked(uint256 amount);
+	event Distribute_Rewards(uint256 amount);
 
 	function initialize() public initializer {
 		__Ownable_init();
@@ -35,7 +36,7 @@ contract X_Core is Initializable, OwnableUpgradeable, UUPSUpgradeable, Reentranc
 		require(msg.value > 0, "deposit must be greater than 0");
 
 		// calculate the amount of ls tokens to mint based on the current exchange rate
-		uint256 protocol_eth = _state.total_deposits + get_rewards();
+		uint256 protocol_eth = _state.total_deposits + get_wc_rewards();
 		uint256 ls_token_supply = i_ls_token(_state.contracts.ls_token).totalSupply();
 		uint256 mint_amount;
 		if (ls_token_supply == 0) {
@@ -56,60 +57,70 @@ contract X_Core is Initializable, OwnableUpgradeable, UUPSUpgradeable, Reentranc
 		require(i_ls_token(_state.contracts.ls_token).balanceOf(_msgSender()) >= amount, "insufficient balance");
 
 		// calculate the amount of ETH to withdraw based on the current exchange rate
-		uint256 protocol_eth = _state.total_deposits + get_rewards();
+		uint256 protocol_eth = _state.total_deposits + get_wc_rewards();
 		uint256 ls_token_supply = i_ls_token(_state.contracts.ls_token).totalSupply();
 		uint256 withdraw_amount = (protocol_eth / ls_token_supply) * amount;
 
-		emit WithdrawRequest(withdraw_amount);
+		emit Withdraw_Request(withdraw_amount);
 
 		// core contract does not have enough ETH to process withdrawal request
-		if (withdraw_amount > _state.total_deposits) {
+		if (withdraw_amount > address(this).balance) {
 			// both core and withdraw contract does not have enough ETH to process this withdrawal request (need to unwind from validator)
-			if (protocol_eth < withdraw_amount) {
+			if (withdraw_amount > protocol_eth) {
 				_state.withdrawals.withdraw_account[_msgSender()] += withdraw_amount;
 				_state.withdrawals.withdraw_total += withdraw_amount;
 				uint256 unstake_validators = (withdraw_amount - protocol_eth) / validator_capacity;
-				_state.withdrawals.unstaked_validators += unstake_validators == 0 ? 1 : unstake_validators;
+				if ((withdraw_amount - protocol_eth) % validator_capacity > 0) unstake_validators++;
 
+				_state.total_deposits -= withdraw_amount;
 				i_ls_token(_state.contracts.ls_token).burnFrom(_msgSender(), amount);
 
-				emit UnstakeValidator(withdraw_amount, withdraw_amount - protocol_eth);
+				emit Unstake_Validator(withdraw_amount, withdraw_amount - protocol_eth, unstake_validators);
 
 				return;
 			} else {
 				// core + withdraw contract has enough ETH to process withdrawal request
+				// so we move unstaked ETH from withdraw contract to core contract
+				// as withdrawals funds should never be processed from the withdraw contract
 				withdraw_unstaked();
 			}
 		}
 		// only core contract funds should be used to process withdrawal requests
+		distribute_rewards();
 		_state.total_deposits -= withdraw_amount;
 		i_ls_token(_state.contracts.ls_token).burnFrom(_msgSender(), amount);
 		payable(_msgSender()).transfer(withdraw_amount);
 
-		emit WithdrawClaim(withdraw_amount);
+		emit Withdraw_Claim(withdraw_amount);
 	}
 
 	function withdraw_unstaked() internal {
+		require(_state.withdrawals.unstaked_validators > 0, "no existing unstaked validators");
 		// move unstaked ETH from withdraw contract to core contract to ensure withdraw contract funds are not mixed with rewards
 		uint256 unstaked_validators = _state.contracts.withdraw.balance / validator_capacity;
 		if (unstaked_validators > 0) {
 			_state.withdrawals.unstaked_validators -= unstaked_validators;
-			i_withdraw(_state.contracts.withdraw).withdraw(payable(address(this)), unstaked_validators * validator_capacity);
+			uint256 unstaked_amount = unstaked_validators * validator_capacity;
+			i_withdraw(_state.contracts.withdraw).withdraw(payable(address(this)), unstaked_amount);
+
+			emit Withdraw_Unstaked(unstaked_amount);
 		}
 	}
 
 	function claim_withdrawal() external {
 		uint256 withdraw_amount = _state.withdrawals.withdraw_account[_msgSender()];
 		require(withdraw_amount > 0, "no withdrawal to claim");
+		require(address(this).balance >= withdraw_amount, "insufficient funds to process request");
 
-		_state.total_deposits -= withdraw_amount;
 		_state.withdrawals.withdraw_account[_msgSender()] = 0;
 		payable(_msgSender()).transfer(withdraw_amount);
 
-		emit WithdrawClaim(withdraw_amount);
+		emit Withdraw_Claim(withdraw_amount);
 	}
 
-	function get_rewards() public view returns (uint256) {
+	// get withdraw contract rewards
+	// calculates rewards not moved to the core contract yet
+	function get_wc_rewards() public view returns (uint256) {
 		if (_state.withdrawals.withdraw_total > 0) {
 			uint256 unstaked_validators = _state.contracts.withdraw.balance / validator_capacity;
 			if (unstaked_validators > 0) {
@@ -119,12 +130,18 @@ contract X_Core is Initializable, OwnableUpgradeable, UUPSUpgradeable, Reentranc
 		return _state.contracts.withdraw.balance;
 	}
 
-	function withdraw_rewards() external nonReentrant onlyOwner {
-		uint256 rewards = get_rewards();
+	function distribute_rewards() public nonReentrant {
+		uint256 rewards = get_wc_rewards();
 		i_withdraw(_state.contracts.withdraw).withdraw(payable(address(this)), rewards);
 		_state.total_deposits += rewards;
+		_state.distributed_rewards += rewards;
 
-		emit WithdrawRewards(rewards);
+		emit Distribute_Rewards(rewards);
+	}
+
+	// returns all time protocol collected rewards
+	function get_total_rewards() public view returns (uint256) {
+		return _state.distributed_rewards + get_wc_rewards();
 	}
 
 	function stake_validator() external onlyOwner {}
