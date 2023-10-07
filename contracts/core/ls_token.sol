@@ -11,16 +11,17 @@ contract xETH is Initializable, ERC20Upgradeable, ERC20BurnableUpgradeable, Owna
 	address public protocol;
 
 	/// @custom:oz-upgrades-unsafe-allow constructor
-	constructor(address protocol_) {
-		protocol = protocol_;
+	constructor() {
 		_disableInitializers();
 	}
 
-	function initialize() public initializer {
+	function initialize(address protocol_) public initializer {
 		__ERC20_init("xETH", "xETH");
 		__ERC20Burnable_init();
 		__Ownable_init();
 		__UUPSUpgradeable_init();
+
+		protocol = protocol_;
 	}
 
 	modifier onlyProtocol() {

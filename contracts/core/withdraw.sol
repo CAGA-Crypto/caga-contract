@@ -9,8 +9,7 @@ contract X_Withdraw is Initializable, OwnableUpgradeable, UUPSUpgradeable {
 	address public protocol;
 
 	/// @custom:oz-upgrades-unsafe-allow constructor
-	constructor(address protocol_) {
-		protocol = protocol_;
+	constructor() {
 		_disableInitializers();
 	}
 
@@ -19,9 +18,11 @@ contract X_Withdraw is Initializable, OwnableUpgradeable, UUPSUpgradeable {
 		_;
 	}
 
-	function initialize() public initializer {
+	function initialize(address protocol_) public initializer {
 		__Ownable_init();
 		__UUPSUpgradeable_init();
+
+		protocol = protocol_;
 	}
 
 	function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}

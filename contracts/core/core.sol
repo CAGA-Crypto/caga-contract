@@ -26,6 +26,7 @@ contract X_Core is Initializable, UUPSUpgradeable, ReentrancyGuard, Core_Getters
 	function initialize() public initializer {
 		__Ownable_init();
 		__UUPSUpgradeable_init();
+
 		_state.constants.validator_capacity = 32 ether;
 		_state.protocol_fee_percentage = 1000000000; // 10% (8 decimals)
 	}
