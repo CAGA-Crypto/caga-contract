@@ -5,6 +5,18 @@ pragma solidity ^0.8.9;
 import "./core_state.sol";
 
 contract Core_Getters is Core_State {
+	function get_validator_capacity() external view returns (uint256) {
+		return _state.constants.validator_capacity;
+	}
+
+	function get_ls_token_contract() external view returns (address) {
+		return _state.contracts.ls_token;
+	}
+
+	function get_withdraw_contract() external view returns (address) {
+		return _state.contracts.withdraw;
+	}
+
 	// get withdraw contract rewards
 	// calculates rewards not moved to the core contract yet
 	function get_wc_rewards() public view returns (uint256) {
