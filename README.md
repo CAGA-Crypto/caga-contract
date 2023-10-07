@@ -6,6 +6,5 @@
 # Run static code analysis - Slither
 
 ```
-yarn run hardhat compile
 slither .
 ```
