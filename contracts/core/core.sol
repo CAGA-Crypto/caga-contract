@@ -116,6 +116,7 @@ contract X_Core is Initializable, UUPSUpgradeable, ReentrancyGuard, Core_Getters
 		require(address(this).balance >= withdraw_amount, "insufficient funds to process request");
 
 		_state.withdrawals.withdraw_account[_msgSender()] = 0;
+
 		payable(_msgSender()).transfer(withdraw_amount);
 
 		emit Withdraw_Claim(withdraw_amount);
@@ -123,11 +124,12 @@ contract X_Core is Initializable, UUPSUpgradeable, ReentrancyGuard, Core_Getters
 
 	function distribute_rewards() public nonReentrant {
 		(uint256 rewards, uint256 protocol_rewards) = get_wc_rewards();
-		i_withdraw(_state.contracts.withdraw).withdraw(payable(address(this)), rewards);
-		i_withdraw(_state.contracts.withdraw).withdraw(payable(_state.treasury), protocol_rewards);
 		_state.total_deposits += rewards;
 		_state.distributed_rewards += rewards;
 		_state.protocol_rewards += protocol_rewards;
+
+		i_withdraw(_state.contracts.withdraw).withdraw(payable(address(this)), rewards);
+		i_withdraw(_state.contracts.withdraw).withdraw(payable(_state.treasury), protocol_rewards);
 
 		emit Distribute_Rewards(rewards, protocol_rewards);
 	}

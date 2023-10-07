@@ -32,6 +32,8 @@ contract xETH is Initializable, ERC20Upgradeable, ERC20BurnableUpgradeable, Owna
 	}
 
 	function set_protocol(address new_protocol) external onlyOwner {
+		require(new_protocol != address(0), "address cannot be 0");
+
 		protocol = new_protocol;
 	}
 
