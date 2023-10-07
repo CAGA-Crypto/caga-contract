@@ -97,6 +97,18 @@ contract X_Core is Initializable, UUPSUpgradeable, ReentrancyGuard, Core_Getters
 		emit Withdraw_Claim(withdraw_amount);
 	}
 
+	function claim_withdrawal() external nonReentrant {
+		uint256 withdraw_amount = _state.withdrawals.withdraw_account[_msgSender()];
+		require(withdraw_amount > 0, "no withdrawal to claim");
+		require(address(this).balance >= withdraw_amount, "insufficient funds to process request");
+
+		_state.withdrawals.withdraw_account[_msgSender()] = 0;
+
+		payable(_msgSender()).transfer(withdraw_amount);
+
+		emit Withdraw_Claim(withdraw_amount);
+	}
+
 	function withdraw_unstaked() public nonReentrant {
 		require(_state.withdrawals.unstaked_validators > 0, "no existing unstaked validators");
 		// move unstaked ETH from withdraw contract to core contract to ensure withdraw contract funds are not mixed with rewards
@@ -108,18 +120,6 @@ contract X_Core is Initializable, UUPSUpgradeable, ReentrancyGuard, Core_Getters
 
 			emit Withdraw_Unstaked(unstaked_amount);
 		}
-	}
-
-	function claim_withdrawal() external nonReentrant {
-		uint256 withdraw_amount = _state.withdrawals.withdraw_account[_msgSender()];
-		require(withdraw_amount > 0, "no withdrawal to claim");
-		require(address(this).balance >= withdraw_amount, "insufficient funds to process request");
-
-		_state.withdrawals.withdraw_account[_msgSender()] = 0;
-
-		payable(_msgSender()).transfer(withdraw_amount);
-
-		emit Withdraw_Claim(withdraw_amount);
 	}
 
 	function distribute_rewards() public nonReentrant {
