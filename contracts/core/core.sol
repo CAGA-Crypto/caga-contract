@@ -44,7 +44,7 @@ contract X_Core is Initializable, UUPSUpgradeable, ReentrancyGuard, Core_Getters
 		if (ls_token_supply == 0) {
 			mint_amount = msg.value;
 		} else {
-			mint_amount = (ls_token_supply / protocol_eth) * msg.value;
+			mint_amount = (ls_token_supply * msg.value) / protocol_eth;
 		}
 
 		_state.total_deposits += msg.value;
@@ -62,7 +62,7 @@ contract X_Core is Initializable, UUPSUpgradeable, ReentrancyGuard, Core_Getters
 		(uint256 rewards, ) = get_wc_rewards();
 		uint256 protocol_eth = _state.total_deposits + rewards;
 		uint256 ls_token_supply = i_ls_token(_state.contracts.ls_token).totalSupply();
-		uint256 withdraw_amount = (protocol_eth / ls_token_supply) * amount;
+		uint256 withdraw_amount = (protocol_eth * amount) / ls_token_supply;
 
 		emit Withdraw_Request(withdraw_amount);
 
@@ -116,7 +116,7 @@ contract X_Core is Initializable, UUPSUpgradeable, ReentrancyGuard, Core_Getters
 		if (unstaked_validators > 0) {
 			_state.withdrawals.unstaked_validators -= unstaked_validators;
 			uint256 unstaked_amount = unstaked_validators * _state.constants.validator_capacity;
-			i_withdraw(_state.contracts.withdraw).withdraw(payable(address(this)), unstaked_amount);
+			i_withdraw(_state.contracts.withdraw).protocol_withdraw(unstaked_amount);
 
 			emit Withdraw_Unstaked(unstaked_amount);
 		}
@@ -128,8 +128,8 @@ contract X_Core is Initializable, UUPSUpgradeable, ReentrancyGuard, Core_Getters
 		_state.distributed_rewards += rewards;
 		_state.protocol_rewards += protocol_rewards;
 
-		i_withdraw(_state.contracts.withdraw).withdraw(payable(address(this)), rewards);
-		i_withdraw(_state.contracts.withdraw).withdraw(payable(_state.treasury), protocol_rewards);
+		i_withdraw(_state.contracts.withdraw).protocol_withdraw(rewards);
+		i_withdraw(_state.contracts.withdraw).protocol_withdraw(protocol_rewards);
 
 		emit Distribute_Rewards(rewards, protocol_rewards);
 	}

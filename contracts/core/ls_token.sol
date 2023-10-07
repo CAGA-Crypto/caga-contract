@@ -27,7 +27,7 @@ contract xETH is Initializable, ERC20Upgradeable, ERC20BurnableUpgradeable, Owna
 	function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
 	modifier onlyProtocol() {
-		require(protocol == _msgSender(), "caller is not the protocol");
+		require(_msgSender() == protocol, "caller is not the protocol");
 		_;
 	}
 

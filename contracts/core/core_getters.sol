@@ -25,9 +25,12 @@ contract Core_Getters is Core_State {
 			uint256 unstaked_validators = _state.contracts.withdraw.balance / _state.constants.validator_capacity;
 			if (unstaked_validators > 0) {
 				rewards = _state.contracts.withdraw.balance - (unstaked_validators * _state.constants.validator_capacity);
+			} else {
+				rewards = _state.contracts.withdraw.balance;
 			}
+		} else {
+			rewards = _state.contracts.withdraw.balance;
 		}
-		rewards = _state.contracts.withdraw.balance;
 
 		// calculate protocol reward
 		uint256 protocol_reward = (rewards * _state.protocol_fee_percentage) / 10000000000;
