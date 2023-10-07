@@ -6,13 +6,12 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-import "./core_state.sol";
+import "./core_getters.sol";
+import "./core_setters.sol";
 import "../interfaces/i_ls_token.sol";
 import "../interfaces/i_withdraw.sol";
 
-contract X_Core is Initializable, OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuard, Core_State {
-	uint256 public immutable validator_capacity = 32000000000000000000;
-
+contract X_Core is Initializable, OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuard, Core_Getters, Core_Setters {
 	/// @custom:oz-upgrades-unsafe-allow constructor
 	constructor() {
 		_disableInitializers();
@@ -28,6 +27,7 @@ contract X_Core is Initializable, OwnableUpgradeable, UUPSUpgradeable, Reentranc
 	function initialize() public initializer {
 		__Ownable_init();
 		__UUPSUpgradeable_init();
+		_state.constants.validator_capacity = 32 ether;
 	}
 
 	function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
@@ -69,8 +69,8 @@ contract X_Core is Initializable, OwnableUpgradeable, UUPSUpgradeable, Reentranc
 			if (withdraw_amount > protocol_eth) {
 				_state.withdrawals.withdraw_account[_msgSender()] += withdraw_amount;
 				_state.withdrawals.withdraw_total += withdraw_amount;
-				uint256 unstake_validators = (withdraw_amount - protocol_eth) / validator_capacity;
-				if ((withdraw_amount - protocol_eth) % validator_capacity > 0) unstake_validators++;
+				uint256 unstake_validators = (withdraw_amount - protocol_eth) / _state.constants.validator_capacity;
+				if ((withdraw_amount - protocol_eth) % _state.constants.validator_capacity > 0) unstake_validators++;
 
 				_state.total_deposits -= withdraw_amount;
 				i_ls_token(_state.contracts.ls_token).burnFrom(_msgSender(), amount);
@@ -97,10 +97,10 @@ contract X_Core is Initializable, OwnableUpgradeable, UUPSUpgradeable, Reentranc
 	function withdraw_unstaked() internal {
 		require(_state.withdrawals.unstaked_validators > 0, "no existing unstaked validators");
 		// move unstaked ETH from withdraw contract to core contract to ensure withdraw contract funds are not mixed with rewards
-		uint256 unstaked_validators = _state.contracts.withdraw.balance / validator_capacity;
+		uint256 unstaked_validators = _state.contracts.withdraw.balance / _state.constants.validator_capacity;
 		if (unstaked_validators > 0) {
 			_state.withdrawals.unstaked_validators -= unstaked_validators;
-			uint256 unstaked_amount = unstaked_validators * validator_capacity;
+			uint256 unstaked_amount = unstaked_validators * _state.constants.validator_capacity;
 			i_withdraw(_state.contracts.withdraw).withdraw(payable(address(this)), unstaked_amount);
 
 			emit Withdraw_Unstaked(unstaked_amount);
@@ -118,18 +118,6 @@ contract X_Core is Initializable, OwnableUpgradeable, UUPSUpgradeable, Reentranc
 		emit Withdraw_Claim(withdraw_amount);
 	}
 
-	// get withdraw contract rewards
-	// calculates rewards not moved to the core contract yet
-	function get_wc_rewards() public view returns (uint256) {
-		if (_state.withdrawals.withdraw_total > 0) {
-			uint256 unstaked_validators = _state.contracts.withdraw.balance / validator_capacity;
-			if (unstaked_validators > 0) {
-				return _state.contracts.withdraw.balance - (unstaked_validators * validator_capacity);
-			}
-		}
-		return _state.contracts.withdraw.balance;
-	}
-
 	function distribute_rewards() public nonReentrant {
 		uint256 rewards = get_wc_rewards();
 		i_withdraw(_state.contracts.withdraw).withdraw(payable(address(this)), rewards);
@@ -137,11 +125,6 @@ contract X_Core is Initializable, OwnableUpgradeable, UUPSUpgradeable, Reentranc
 		_state.distributed_rewards += rewards;
 
 		emit Distribute_Rewards(rewards);
-	}
-
-	// returns all time protocol collected rewards
-	function get_total_rewards() public view returns (uint256) {
-		return _state.distributed_rewards + get_wc_rewards();
 	}
 
 	function stake_validator() external onlyOwner {}
