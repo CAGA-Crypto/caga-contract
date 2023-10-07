@@ -11,24 +11,31 @@ contract xGov is Initializable, ERC20Upgradeable, ERC20BurnableUpgradeable, Owna
 	address public protocol;
 
 	/// @custom:oz-upgrades-unsafe-allow constructor
-	constructor(address protocol_) {
-		protocol = protocol_;
+	constructor() {
 		_disableInitializers();
 	}
 
-	function initialize() public initializer {
-		__ERC20_init("xGov", "xGov");
+	function initialize(address protocol_) public initializer {
+		__ERC20_init("CAGA", "CAGA");
 		__ERC20Burnable_init();
 		__Ownable_init();
 		__UUPSUpgradeable_init();
-	}
 
-	modifier onlyProtocol() {
-		require(protocol == _msgSender(), "caller is not the protocol");
-		_;
+		protocol = protocol_;
 	}
 
 	function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
+
+	modifier onlyProtocol() {
+		require(_msgSender() == protocol, "caller is not the protocol");
+		_;
+	}
+
+	function set_protocol(address new_protocol) external onlyOwner {
+		require(new_protocol != address(0), "address cannot be 0");
+
+		protocol = new_protocol;
+	}
 
 	function mint(address to, uint256 amount) external onlyProtocol {
 		_mint(to, amount);
