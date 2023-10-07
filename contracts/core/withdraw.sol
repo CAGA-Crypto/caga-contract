@@ -13,11 +13,6 @@ contract X_Withdraw is Initializable, OwnableUpgradeable, UUPSUpgradeable {
 		_disableInitializers();
 	}
 
-	modifier onlyProtocol() {
-		require(protocol == _msgSender(), "caller is not the protocol");
-		_;
-	}
-
 	function initialize(address protocol_) public initializer {
 		__Ownable_init();
 		__UUPSUpgradeable_init();
@@ -26,6 +21,15 @@ contract X_Withdraw is Initializable, OwnableUpgradeable, UUPSUpgradeable {
 	}
 
 	function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
+
+	modifier onlyProtocol() {
+		require(protocol == _msgSender(), "caller is not the protocol");
+		_;
+	}
+
+	function set_protocol(address new_protocol) external onlyOwner {
+		protocol = new_protocol;
+	}
 
 	function withdraw(address payable to, uint256 amount) external onlyProtocol {
 		to.transfer(amount);

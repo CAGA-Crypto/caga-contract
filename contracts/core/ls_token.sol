@@ -24,12 +24,16 @@ contract xETH is Initializable, ERC20Upgradeable, ERC20BurnableUpgradeable, Owna
 		protocol = protocol_;
 	}
 
+	function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
+
 	modifier onlyProtocol() {
 		require(protocol == _msgSender(), "caller is not the protocol");
 		_;
 	}
 
-	function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
+	function set_protocol(address new_protocol) external onlyOwner {
+		protocol = new_protocol;
+	}
 
 	function mint(address to, uint256 amount) external onlyProtocol {
 		_mint(to, amount);
