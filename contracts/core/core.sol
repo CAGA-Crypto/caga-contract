@@ -21,12 +21,13 @@ contract X_Core is Initializable, UUPSUpgradeable, ReentrancyGuard, Core_Getters
 	event Withdraw_Claim(uint256 amount);
 	event Unstake_Validator(uint256 full_amount, uint256 shortfall, uint256 validators_to_unstake);
 	event Withdraw_Unstaked(uint256 amount);
-	event Distribute_Rewards(uint256 amount);
+	event Distribute_Rewards(uint256 rewards, uint256 protocol_rewards);
 
 	function initialize() public initializer {
 		__Ownable_init();
 		__UUPSUpgradeable_init();
 		_state.constants.validator_capacity = 32 ether;
+		_state.protocol_fee_percentage = 1000000000; // 10% (8 decimals)
 	}
 
 	function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
@@ -35,7 +36,8 @@ contract X_Core is Initializable, UUPSUpgradeable, ReentrancyGuard, Core_Getters
 		require(msg.value > 0, "deposit must be greater than 0");
 
 		// calculate the amount of ls tokens to mint based on the current exchange rate
-		uint256 protocol_eth = _state.total_deposits + get_wc_rewards();
+		(uint256 rewards, ) = get_wc_rewards();
+		uint256 protocol_eth = _state.total_deposits + rewards;
 		uint256 ls_token_supply = i_ls_token(_state.contracts.ls_token).totalSupply();
 		uint256 mint_amount;
 		if (ls_token_supply == 0) {
@@ -56,7 +58,8 @@ contract X_Core is Initializable, UUPSUpgradeable, ReentrancyGuard, Core_Getters
 		require(i_ls_token(_state.contracts.ls_token).balanceOf(_msgSender()) >= amount, "insufficient balance");
 
 		// calculate the amount of ETH to withdraw based on the current exchange rate
-		uint256 protocol_eth = _state.total_deposits + get_wc_rewards();
+		(uint256 rewards, ) = get_wc_rewards();
+		uint256 protocol_eth = _state.total_deposits + rewards;
 		uint256 ls_token_supply = i_ls_token(_state.contracts.ls_token).totalSupply();
 		uint256 withdraw_amount = (protocol_eth / ls_token_supply) * amount;
 
@@ -118,12 +121,14 @@ contract X_Core is Initializable, UUPSUpgradeable, ReentrancyGuard, Core_Getters
 	}
 
 	function distribute_rewards() public nonReentrant {
-		uint256 rewards = get_wc_rewards();
+		(uint256 rewards, uint256 protocol_rewards) = get_wc_rewards();
 		i_withdraw(_state.contracts.withdraw).withdraw(payable(address(this)), rewards);
+		i_withdraw(_state.contracts.withdraw).withdraw(payable(_state.treasury), protocol_rewards);
 		_state.total_deposits += rewards;
 		_state.distributed_rewards += rewards;
+		_state.protocol_rewards += protocol_rewards;
 
-		emit Distribute_Rewards(rewards);
+		emit Distribute_Rewards(rewards, protocol_rewards);
 	}
 
 	function stake_validator() external onlyOwner {}

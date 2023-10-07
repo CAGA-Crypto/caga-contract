@@ -21,9 +21,12 @@ contract Storage {
 	struct State {
 		Constants constants;
 		Contracts contracts;
-		uint256 total_deposits;
-		uint256 distributed_rewards;
+		uint256 total_deposits; // total deposits + distributed rewards
 		Withdrawals withdrawals;
+		uint256 distributed_rewards;
+		address treasury;
+		uint256 protocol_fee_percentage; // percentage of rewards to be distributed to protocol
+		uint256 protocol_rewards; // protocol rewards collected from distributing rewards
 	}
 }
 

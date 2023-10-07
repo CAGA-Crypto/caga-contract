@@ -17,20 +17,35 @@ contract Core_Getters is Core_State {
 		return _state.contracts.withdraw;
 	}
 
-	// get withdraw contract rewards
+	// get withdraw contract rewards and protocol rewards
 	// calculates rewards not moved to the core contract yet
-	function get_wc_rewards() public view returns (uint256) {
+	function get_wc_rewards() public view returns (uint256, uint256) {
+		uint256 rewards;
 		if (_state.withdrawals.withdraw_total > 0) {
 			uint256 unstaked_validators = _state.contracts.withdraw.balance / _state.constants.validator_capacity;
 			if (unstaked_validators > 0) {
-				return _state.contracts.withdraw.balance - (unstaked_validators * _state.constants.validator_capacity);
+				rewards = _state.contracts.withdraw.balance - (unstaked_validators * _state.constants.validator_capacity);
 			}
 		}
-		return _state.contracts.withdraw.balance;
+		rewards = _state.contracts.withdraw.balance;
+
+		// calculate protocol reward
+		uint256 protocol_reward = (rewards * _state.protocol_fee_percentage) / 10000000000;
+
+		return (rewards - protocol_reward, protocol_reward);
 	}
 
 	// returns all time protocol collected rewards
 	function get_total_rewards() external view returns (uint256) {
-		return _state.distributed_rewards + get_wc_rewards();
+		(uint256 rewards, ) = get_wc_rewards();
+		return _state.distributed_rewards + rewards;
+	}
+
+	function get_treasury_address() external view returns (address) {
+		return _state.treasury;
+	}
+
+	function get_protocol_fee_percentage() external view returns (uint256) {
+		return _state.protocol_fee_percentage;
 	}
 }
