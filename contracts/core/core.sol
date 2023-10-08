@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.21;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
@@ -10,7 +10,7 @@ import "./core_setters.sol";
 import "../interfaces/i_ls_token.sol";
 import "../interfaces/i_withdraw.sol";
 
-contract X_Core is Initializable, UUPSUpgradeable, ReentrancyGuard, Core_Getters, Core_Setters {
+contract Core is Initializable, UUPSUpgradeable, ReentrancyGuard, Core_Getters, Core_Setters {
 	/// @custom:oz-upgrades-unsafe-allow constructor
 	constructor() {
 		_disableInitializers();

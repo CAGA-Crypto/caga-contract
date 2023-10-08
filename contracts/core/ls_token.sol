@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.21;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20BurnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PermitUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
-contract xETH is Initializable, ERC20Upgradeable, ERC20BurnableUpgradeable, OwnableUpgradeable, UUPSUpgradeable {
+contract LS_Token is Initializable, ERC20Upgradeable, ERC20BurnableUpgradeable, OwnableUpgradeable, ERC20PermitUpgradeable, UUPSUpgradeable {
 	address public protocol;
 
 	/// @custom:oz-upgrades-unsafe-allow constructor
@@ -16,9 +17,10 @@ contract xETH is Initializable, ERC20Upgradeable, ERC20BurnableUpgradeable, Owna
 	}
 
 	function initialize(address protocol_) public initializer {
-		__ERC20_init("xETH", "xETH");
+		__ERC20_init("CAGA ETH", "cgETH");
 		__ERC20Burnable_init();
 		__Ownable_init();
+		__ERC20Permit_init("CAGA ETH");
 		__UUPSUpgradeable_init();
 
 		protocol = protocol_;
