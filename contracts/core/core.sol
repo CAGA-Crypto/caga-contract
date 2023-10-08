@@ -23,12 +23,16 @@ contract Core is Initializable, UUPSUpgradeable, ReentrancyGuard, Core_Getters, 
 	event Withdraw_Unstaked(uint256 amount);
 	event Distribute_Rewards(uint256 rewards, uint256 protocol_rewards);
 
-	function initialize() public initializer {
+	function initialize(address ls_token, address withdraw_contract) public initializer {
 		__Ownable_init();
 		__UUPSUpgradeable_init();
 
 		_state.constants.validator_capacity = 32 ether;
 		_state.protocol_fee_percentage = 1000000000; // 10% (8 decimals)
+
+		_state.contracts.ls_token = ls_token;
+		_state.contracts.withdraw = withdraw_contract;
+		_state.treasury = msg.sender;
 	}
 
 	function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
