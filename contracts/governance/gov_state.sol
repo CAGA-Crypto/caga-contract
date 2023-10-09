@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.21;
 
-contract Storage {
+contract Gov_Storage {
 	struct Contracts {
 		address gov_token;
 		address sgov_token;
@@ -22,5 +22,5 @@ contract Storage {
 }
 
 contract Gov_State {
-	Storage.State _state;
+	Gov_Storage.State _state;
 }

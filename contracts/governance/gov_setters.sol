@@ -6,7 +6,7 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 import "./gov_state.sol";
 
-contract Core_Setters is OwnableUpgradeable, Gov_State {
+contract Gov_Setters is OwnableUpgradeable, Gov_State {
 	function setGovToken(address _gov_token) external onlyOwner {
 		_state.contracts.gov_token = _gov_token;
 	}

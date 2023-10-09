@@ -3,13 +3,14 @@ pragma solidity ^0.8.21;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 import "./gov_getters.sol";
 import "./gov_setters.sol";
 import "../interfaces/i_gov_token.sol";
 import "../interfaces/i_sgov_token.sol";
 
-contract Governance is Initializable, UUPSUpgradeable, Core_Getters, Core_Setters {
+contract Governance is Initializable, UUPSUpgradeable, ReentrancyGuard, Gov_Getters, Gov_Setters {
 	/// @custom:oz-upgrades-unsafe-allow constructor
 	constructor() {
 		_disableInitializers();
@@ -29,7 +30,7 @@ contract Governance is Initializable, UUPSUpgradeable, Core_Getters, Core_Setter
 
 	function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
-	function stake(uint256 amount) public {
+	function stake(uint256 amount) external nonReentrant {
 		require(amount > 0, "amount must be greater than 0");
 
 		if (_state.emissions.is_staking[_msgSender()]) {
@@ -45,7 +46,7 @@ contract Governance is Initializable, UUPSUpgradeable, Core_Getters, Core_Setter
 		emit Stake(_msgSender(), amount);
 	}
 
-	function unstake(uint256 amount) public {
+	function unstake(uint256 amount) external nonReentrant {
 		require(_state.emissions.is_staking[_msgSender()] && _state.emissions.staking_balance[_msgSender()] >= amount, "invalid unstake amount");
 
 		uint256 yieldTransfer = calculateYieldTotal(_msgSender());
@@ -69,7 +70,7 @@ contract Governance is Initializable, UUPSUpgradeable, Core_Getters, Core_Setter
 		return totalTime;
 	}
 
-	function calculateYieldTotal(address user) public view returns (uint256) {
+	function calculateYieldTotal(address user) internal view returns (uint256) {
 		uint256 time = calculateYieldTime(user) * 10 ** 18;
 		uint256 rate = 86400;
 		uint256 timeRate = time / rate;
@@ -78,7 +79,7 @@ contract Governance is Initializable, UUPSUpgradeable, Core_Getters, Core_Setter
 		return rawYield;
 	}
 
-	function withdrawYield() public {
+	function withdrawYield() external nonReentrant {
 		uint256 toTransfer = calculateYieldTotal(_msgSender());
 
 		require(toTransfer > 0 || _state.emissions.gov_balance[_msgSender()] > 0, "no yield to withdraw");

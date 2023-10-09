@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.21;
 
-contract Storage {
+contract Core_Storage {
 	struct Constants {
 		uint256 validator_capacity;
 	}
@@ -31,5 +31,5 @@ contract Storage {
 }
 
 contract Core_State {
-	Storage.State _state;
+	Core_Storage.State _state;
 }

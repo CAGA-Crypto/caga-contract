@@ -4,7 +4,7 @@ pragma solidity ^0.8.21;
 
 import "./gov_state.sol";
 
-contract Core_Getters is Gov_State {
+contract Gov_Getters is Gov_State {
 	function get_gov_token() public view returns (address) {
 		return _state.contracts.gov_token;
 	}
