@@ -16,10 +16,10 @@ contract Core is Initializable, UUPSUpgradeable, ReentrancyGuard, Core_Getters, 
 		_disableInitializers();
 	}
 
-	event Deposit(uint256 amount);
-	event Withdraw_Request(uint256 amount);
-	event Withdraw_Claim(uint256 amount);
-	event Unstake_Validator(uint256 full_amount, uint256 shortfall, uint256 validators_to_unstake);
+	event Deposit(address from, uint256 amount);
+	event Withdraw_Request(address from, uint256 amount);
+	event Withdraw_Claim(address from, uint256 amount);
+	event Unstake_Validator(address from, uint256 full_amount, uint256 shortfall, uint256 validators_to_unstake);
 	event Withdraw_Unstaked(uint256 amount);
 	event Distribute_Rewards(uint256 rewards, uint256 protocol_rewards);
 
@@ -55,7 +55,7 @@ contract Core is Initializable, UUPSUpgradeable, ReentrancyGuard, Core_Getters, 
 
 		i_ls_token(_state.contracts.ls_token).mint(_msgSender(), mint_amount);
 
-		emit Deposit(msg.value);
+		emit Deposit(_msgSender(), msg.value);
 	}
 
 	function request_withdraw(uint256 amount) external nonReentrant {
@@ -68,7 +68,7 @@ contract Core is Initializable, UUPSUpgradeable, ReentrancyGuard, Core_Getters, 
 		uint256 ls_token_supply = i_ls_token(_state.contracts.ls_token).totalSupply();
 		uint256 withdraw_amount = (protocol_eth * amount) / ls_token_supply;
 
-		emit Withdraw_Request(withdraw_amount);
+		emit Withdraw_Request(_msgSender(), withdraw_amount);
 
 		// core contract does not have enough ETH to process withdrawal request
 		if (withdraw_amount > address(this).balance) {
@@ -82,7 +82,7 @@ contract Core is Initializable, UUPSUpgradeable, ReentrancyGuard, Core_Getters, 
 				_state.total_deposits -= withdraw_amount;
 				i_ls_token(_state.contracts.ls_token).burnFrom(_msgSender(), amount);
 
-				emit Unstake_Validator(withdraw_amount, withdraw_amount - protocol_eth, unstake_validators);
+				emit Unstake_Validator(_msgSender(), withdraw_amount, withdraw_amount - protocol_eth, unstake_validators);
 
 				return;
 			} else {
@@ -98,7 +98,7 @@ contract Core is Initializable, UUPSUpgradeable, ReentrancyGuard, Core_Getters, 
 		i_ls_token(_state.contracts.ls_token).burnFrom(_msgSender(), amount);
 		payable(_msgSender()).transfer(withdraw_amount);
 
-		emit Withdraw_Claim(withdraw_amount);
+		emit Withdraw_Claim(_msgSender(), withdraw_amount);
 	}
 
 	function claim_withdrawal() external nonReentrant {
@@ -110,7 +110,7 @@ contract Core is Initializable, UUPSUpgradeable, ReentrancyGuard, Core_Getters, 
 
 		payable(_msgSender()).transfer(withdraw_amount);
 
-		emit Withdraw_Claim(withdraw_amount);
+		emit Withdraw_Claim(_msgSender(), withdraw_amount);
 	}
 
 	function withdraw_unstaked() public nonReentrant {
