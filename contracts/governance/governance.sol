@@ -19,7 +19,7 @@ contract Governance is Initializable, UUPSUpgradeable, ReentrancyGuard, Gov_Gett
 
 	event Stake(address from, uint256 amount);
 	event Unstake(address from, uint256 amount);
-	event YieldWithdraw(address to, uint256 amount);
+	event Claim_Emission(address to, uint256 amount);
 
 	function initialize(address gov_token, address sgov_token) public initializer {
 		__Ownable_init();
@@ -35,7 +35,7 @@ contract Governance is Initializable, UUPSUpgradeable, ReentrancyGuard, Gov_Gett
 		require(amount > 0, "amount must be greater than 0");
 
 		if (_state.emissions.is_staking[_msgSender()]) {
-			uint256 to_transfer = calculateYieldTotal(_msgSender());
+			uint256 to_transfer = calculate_total_emissions(_msgSender());
 			_state.emissions.gov_balance[_msgSender()] += to_transfer;
 		}
 
@@ -50,7 +50,7 @@ contract Governance is Initializable, UUPSUpgradeable, ReentrancyGuard, Gov_Gett
 	function unstake(uint256 amount) external nonReentrant {
 		require(_state.emissions.is_staking[_msgSender()] && _state.emissions.staking_balance[_msgSender()] >= amount, "invalid unstake amount");
 
-		uint256 yieldTransfer = calculateYieldTotal(_msgSender());
+		uint256 yieldTransfer = calculate_total_emissions(_msgSender());
 		_state.emissions.start_time[_msgSender()] = block.timestamp;
 		uint256 balTransfer = amount;
 		amount = 0;
@@ -64,15 +64,15 @@ contract Governance is Initializable, UUPSUpgradeable, ReentrancyGuard, Gov_Gett
 		emit Unstake(_msgSender(), balTransfer);
 	}
 
-	function calculateYieldTime(address user) internal view returns (uint256) {
+	function calculate_emissions(address user) internal view returns (uint256) {
 		uint256 end = block.timestamp;
 		uint256 totalTime = end - _state.emissions.start_time[user];
 
 		return totalTime;
 	}
 
-	function calculateYieldTotal(address user) internal view returns (uint256) {
-		uint256 time = calculateYieldTime(user) * 10 ** 18;
+	function calculate_total_emissions(address user) internal view returns (uint256) {
+		uint256 time = calculate_emissions(user) * 10 ** 18;
 		uint256 rate = 86400;
 		uint256 timeRate = time / rate;
 		uint256 rawYield = (_state.emissions.staking_balance[user] * timeRate) / 10 ** 18;
@@ -80,8 +80,8 @@ contract Governance is Initializable, UUPSUpgradeable, ReentrancyGuard, Gov_Gett
 		return rawYield;
 	}
 
-	function withdrawYield() external nonReentrant {
-		uint256 toTransfer = calculateYieldTotal(_msgSender());
+	function claim() external nonReentrant {
+		uint256 toTransfer = calculate_total_emissions(_msgSender());
 
 		require(toTransfer > 0 || _state.emissions.gov_balance[_msgSender()] > 0, "no yield to withdraw");
 
@@ -95,6 +95,6 @@ contract Governance is Initializable, UUPSUpgradeable, ReentrancyGuard, Gov_Gett
 
 		i_sgov_token(_state.contracts.sgov_token).mint(_msgSender(), toTransfer);
 
-		emit YieldWithdraw(_msgSender(), toTransfer);
+		emit Claim_Emission(_msgSender(), toTransfer);
 	}
 }
