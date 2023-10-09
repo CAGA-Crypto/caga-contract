@@ -18,7 +18,7 @@ contract Core is Initializable, UUPSUpgradeable, ReentrancyGuard, Core_Getters, 
 
 	event Deposit(address from, uint256 amount);
 	event Withdraw_Request(address from, uint256 amount);
-	event Withdraw_Claim(address from, uint256 amount);
+	event Withdraw_Claim(address to, uint256 amount);
 	event Unstake_Validator(address from, uint256 full_amount, uint256 shortfall, uint256 validators_to_unstake);
 	event Withdraw_Unstaked(uint256 amount);
 	event Distribute_Rewards(uint256 rewards, uint256 protocol_rewards);
