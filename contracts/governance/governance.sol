@@ -4,6 +4,7 @@ pragma solidity ^0.8.21;
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "./gov_getters.sol";
 import "./gov_setters.sol";
@@ -38,7 +39,7 @@ contract Governance is Initializable, UUPSUpgradeable, ReentrancyGuard, Gov_Gett
 			_state.emissions.gov_balance[_msgSender()] += to_transfer;
 		}
 
-		i_gov_token(_state.contracts.gov_token).transferFrom(_msgSender(), address(this), amount);
+		SafeERC20.safeTransferFrom(i_gov_token(_state.contracts.gov_token), _msgSender(), address(this), amount);
 		_state.emissions.staking_balance[_msgSender()] += amount;
 		_state.emissions.start_time[_msgSender()] = block.timestamp;
 		_state.emissions.is_staking[_msgSender()] = true;
@@ -54,7 +55,7 @@ contract Governance is Initializable, UUPSUpgradeable, ReentrancyGuard, Gov_Gett
 		uint256 balTransfer = amount;
 		amount = 0;
 		_state.emissions.staking_balance[_msgSender()] -= balTransfer;
-		i_gov_token(_state.contracts.gov_token).transfer(_msgSender(), balTransfer);
+		SafeERC20.safeTransfer(i_gov_token(_state.contracts.gov_token), _msgSender(), balTransfer);
 		_state.emissions.gov_balance[_msgSender()] += yieldTransfer;
 		if (_state.emissions.staking_balance[_msgSender()] == 0) {
 			_state.emissions.is_staking[_msgSender()] = false;
