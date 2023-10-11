@@ -8,6 +8,8 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PermitUp
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
+import "../interfaces/i_governance.sol";
+
 contract sGov_Token is Initializable, ERC20Upgradeable, ERC20BurnableUpgradeable, OwnableUpgradeable, ERC20PermitUpgradeable, UUPSUpgradeable {
 	address public protocol;
 
@@ -49,5 +51,22 @@ contract sGov_Token is Initializable, ERC20Upgradeable, ERC20BurnableUpgradeable
 
 	function burnFrom(address account, uint256 amount) public override onlyProtocol {
 		_mint(account, amount);
+	}
+
+	function transfer(address to, uint256 amount) public override returns (bool) {
+		_transfer(_msgSender(), to, amount);
+
+		i_governance(protocol).transfer_stake(_msgSender(), to, amount);
+
+		return true;
+	}
+
+	function transferFrom(address from, address to, uint256 amount) public override returns (bool) {
+		_spendAllowance(from, _msgSender(), amount);
+		_transfer(from, to, amount);
+
+		i_governance(protocol).transfer_stake(from, to, amount);
+
+		return true;
 	}
 }

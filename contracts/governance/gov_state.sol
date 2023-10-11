@@ -8,6 +8,11 @@ contract Gov_Storage {
 		address sgov_token;
 	}
 
+	struct Rate {
+		uint256 em_rate;
+		uint256 vp_rate;
+	}
+
 	struct Gov_Data {
 		bool is_staking;
 		uint256 start_block;
@@ -19,6 +24,7 @@ contract Gov_Storage {
 
 	struct State {
 		Contracts contracts;
+		Rate rate;
 		mapping(address => Gov_Data) gov_data;
 	}
 }

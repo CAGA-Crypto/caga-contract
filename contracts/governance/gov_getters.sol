@@ -12,4 +12,16 @@ contract Gov_Getters is Gov_State {
 	function get_sgov_token() public view returns (address) {
 		return _state.contracts.sgov_token;
 	}
+
+	function get_emission_rate() public view returns (uint256) {
+		return _state.rate.em_rate;
+	}
+
+	function get_vp_rate() public view returns (uint256) {
+		return _state.rate.vp_rate;
+	}
+
+	function get_user_data(address user) public view returns (Gov_Storage.Gov_Data memory) {
+		return _state.gov_data[user];
+	}
 }
