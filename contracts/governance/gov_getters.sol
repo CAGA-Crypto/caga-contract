@@ -24,4 +24,8 @@ contract Gov_Getters is Gov_State {
 	function get_user_data(address user) public view returns (Gov_Storage.Gov_Data memory) {
 		return _state.gov_data[user];
 	}
+
+	function get_total_vp() public view returns (uint256) {
+		return _state.total_vp;
+	}
 }

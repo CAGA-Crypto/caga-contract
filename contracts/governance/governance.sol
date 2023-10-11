@@ -50,6 +50,7 @@ contract Governance is Initializable, UUPSUpgradeable, ReentrancyGuard, Gov_Gett
 
 			uint256 realised_vp = calculate_em_vp(user, false);
 			_state.gov_data[user].voting_power += realised_vp;
+			_state.total_vp += realised_vp;
 		}
 
 		_state.gov_data[user].staked_balance += amount;
@@ -74,6 +75,7 @@ contract Governance is Initializable, UUPSUpgradeable, ReentrancyGuard, Gov_Gett
 
 		uint256 realised_vp = calculate_em_vp(user, false);
 		_state.gov_data[user].voting_power += realised_vp;
+		_state.total_vp += realised_vp;
 
 		_state.gov_data[user].start_block = block.number;
 		_state.gov_data[user].staked_balance -= amount;
@@ -120,6 +122,7 @@ contract Governance is Initializable, UUPSUpgradeable, ReentrancyGuard, Gov_Gett
 
 		uint256 realised_vp = calculate_em_vp(_msgSender(), false);
 		_state.gov_data[_msgSender()].voting_power += realised_vp;
+		_state.total_vp += realised_vp;
 
 		_state.gov_data[_msgSender()].start_block = block.number;
 

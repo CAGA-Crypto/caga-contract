@@ -26,6 +26,7 @@ contract Gov_Storage {
 		Contracts contracts;
 		Rate rate;
 		mapping(address => Gov_Data) gov_data;
+		uint256 total_vp;
 	}
 }
 
