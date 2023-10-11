@@ -31,70 +31,84 @@ contract Governance is Initializable, UUPSUpgradeable, ReentrancyGuard, Gov_Gett
 
 	function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
+	modifier onlyGovToken() {
+		require(_msgSender() == _state.contracts.gov_token, "caller is not gov token contract");
+		_;
+	}
+
 	function stake(uint256 amount) external nonReentrant {
 		require(amount > 0, "amount must be greater than 0");
 
-		if (_state.emissions.is_staking[_msgSender()]) {
-			uint256 to_transfer = calculate_total_emissions(_msgSender());
-			_state.emissions.gov_balance[_msgSender()] += to_transfer;
+		if (_state.emissions[_msgSender()].is_staking) {
+			uint256 realised_emission = calculate_total_emissions(_msgSender());
+			_state.emissions[_msgSender()].realised_emissions += realised_emission;
 		}
 
+		_state.emissions[_msgSender()].staked_balance += amount;
+		_state.emissions[_msgSender()].start_block = block.number;
+		_state.emissions[_msgSender()].is_staking = true;
+
 		SafeERC20.safeTransferFrom(i_gov_token(_state.contracts.gov_token), _msgSender(), address(this), amount);
-		_state.emissions.staking_balance[_msgSender()] += amount;
-		_state.emissions.start_time[_msgSender()] = block.timestamp;
-		_state.emissions.is_staking[_msgSender()] = true;
+		i_sgov_token(_state.contracts.sgov_token).mint(_msgSender(), amount);
 
 		emit Stake(_msgSender(), amount);
 	}
 
 	function unstake(uint256 amount) external nonReentrant {
-		require(_state.emissions.is_staking[_msgSender()] && _state.emissions.staking_balance[_msgSender()] >= amount, "invalid unstake amount");
+		require(_state.emissions[_msgSender()].is_staking && _state.emissions[_msgSender()].staked_balance >= amount, "invalid unstake amount");
 
-		uint256 yieldTransfer = calculate_total_emissions(_msgSender());
-		_state.emissions.start_time[_msgSender()] = block.timestamp;
-		uint256 balTransfer = amount;
-		amount = 0;
-		_state.emissions.staking_balance[_msgSender()] -= balTransfer;
-		SafeERC20.safeTransfer(i_gov_token(_state.contracts.gov_token), _msgSender(), balTransfer);
-		_state.emissions.gov_balance[_msgSender()] += yieldTransfer;
-		if (_state.emissions.staking_balance[_msgSender()] == 0) {
-			_state.emissions.is_staking[_msgSender()] = false;
+		uint256 realised_emission = calculate_total_emissions(_msgSender());
+		_state.emissions[_msgSender()].start_block = block.number;
+		_state.emissions[_msgSender()].staked_balance -= amount;
+		_state.emissions[_msgSender()].realised_emissions += realised_emission;
+		if (_state.emissions[_msgSender()].staked_balance == 0) {
+			_state.emissions[_msgSender()].is_staking = false;
 		}
 
-		emit Unstake(_msgSender(), balTransfer);
+		i_sgov_token(_state.contracts.sgov_token).burnFrom(_msgSender(), amount);
+		// unstake and claim at the same time
+		SafeERC20.safeTransfer(i_gov_token(_state.contracts.gov_token), _msgSender(), amount + _claim());
+
+		emit Unstake(_msgSender(), amount);
 	}
 
 	function calculate_emissions(address user) internal view returns (uint256) {
-		uint256 end = block.timestamp;
-		uint256 totalTime = end - _state.emissions.start_time[user];
+		uint256 end_block = block.number;
+		uint256 blocks_elapsed = end_block - _state.emissions[user].start_block;
 
-		return totalTime;
+		return blocks_elapsed;
 	}
 
 	function calculate_total_emissions(address user) internal view returns (uint256) {
-		uint256 time = calculate_emissions(user) * 10 ** 18;
-		uint256 rate = 86400;
-		uint256 timeRate = time / rate;
-		uint256 rawYield = (_state.emissions.staking_balance[user] * timeRate) / 10 ** 18;
+		uint256 blocks_elapsed = calculate_emissions(user) * 10 ** 18;
+		// there are 7200 blocks in 24 hours (12 secs per block)
+		uint256 rate = 7200;
+		uint256 block_rate = blocks_elapsed / rate;
+		uint256 emissions = (_state.emissions[user].staked_balance * block_rate) / 10 ** 18;
 
-		return rawYield;
+		return emissions;
+	}
+
+	function _claim() internal returns (uint256) {
+		uint256 realised_emission = calculate_total_emissions(_msgSender());
+
+		require(realised_emission > 0 || _state.emissions[_msgSender()].realised_emissions > 0, "no rewards to claim");
+
+		if (_state.emissions[_msgSender()].realised_emissions != 0) {
+			realised_emission += _state.emissions[_msgSender()].realised_emissions;
+			_state.emissions[_msgSender()].realised_emissions = 0;
+		}
+
+		_state.emissions[_msgSender()].start_block = block.number;
+
+		return realised_emission;
 	}
 
 	function claim() external nonReentrant {
-		uint256 toTransfer = calculate_total_emissions(_msgSender());
+		uint256 realised_emission = _claim();
 
-		require(toTransfer > 0 || _state.emissions.gov_balance[_msgSender()] > 0, "no yield to withdraw");
+		SafeERC20.safeTransfer(i_gov_token(_state.contracts.gov_token), _msgSender(), realised_emission);
 
-		if (_state.emissions.gov_balance[_msgSender()] != 0) {
-			uint256 oldBalance = _state.emissions.gov_balance[_msgSender()];
-			_state.emissions.gov_balance[_msgSender()] = 0;
-			toTransfer += oldBalance;
-		}
-
-		_state.emissions.start_time[_msgSender()] = block.timestamp;
-
-		i_sgov_token(_state.contracts.sgov_token).mint(_msgSender(), toTransfer);
-
-		emit Claim_Emission(_msgSender(), toTransfer);
+		emit Claim_Emission(_msgSender(), realised_emission);
 	}
 }

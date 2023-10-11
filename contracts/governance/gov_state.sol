@@ -8,16 +8,21 @@ contract Gov_Storage {
 		address sgov_token;
 	}
 
-	struct sGov_Emission {
-		mapping(address => uint256) staking_balance;
-		mapping(address => bool) is_staking;
-		mapping(address => uint256) start_time;
-		mapping(address => uint256) gov_balance;
+	struct Gov_Emission {
+		bool is_staking;
+		uint256 start_block;
+		uint256 staked_balance;
+		// realised emissions waiting to be minted (need this to track emissions when user updates staked balance)
+		uint256 realised_emissions;
+	}
+
+	struct Gov_Voting {
+		uint256 voting_power;
 	}
 
 	struct State {
 		Contracts contracts;
-		sGov_Emission emissions;
+		mapping(address => Gov_Emission) emissions;
 	}
 }
 
