@@ -3,7 +3,7 @@ pragma solidity ^0.8.21;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "./gov_getters.sol";
@@ -11,7 +11,7 @@ import "./gov_setters.sol";
 import "../interfaces/i_gov_token.sol";
 import "../interfaces/i_sgov_token.sol";
 
-contract Governance is Initializable, UUPSUpgradeable, ReentrancyGuard, Gov_Getters, Gov_Setters {
+contract Governance is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeable, Gov_Getters, Gov_Setters {
 	/// @custom:oz-upgrades-unsafe-allow constructor
 	constructor() {
 		_disableInitializers();
@@ -25,6 +25,7 @@ contract Governance is Initializable, UUPSUpgradeable, ReentrancyGuard, Gov_Gett
 	function initialize(address gov_token, address sgov_token) public initializer {
 		__Ownable_init();
 		__UUPSUpgradeable_init();
+		__ReentrancyGuard_init();
 
 		_state.contracts.gov_token = gov_token;
 		_state.contracts.sgov_token = sgov_token;
