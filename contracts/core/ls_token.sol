@@ -16,14 +16,12 @@ contract LS_Token is Initializable, ERC20Upgradeable, ERC20BurnableUpgradeable, 
 		_disableInitializers();
 	}
 
-	function initialize(address protocol_) public initializer {
+	function initialize() public initializer {
 		__ERC20_init("CAGA ETH", "cgETH");
 		__ERC20Burnable_init();
 		__Ownable_init();
 		__ERC20Permit_init("CAGA ETH");
 		__UUPSUpgradeable_init();
-
-		protocol = protocol_;
 	}
 
 	function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}

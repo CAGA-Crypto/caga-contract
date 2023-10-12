@@ -13,11 +13,9 @@ contract Withdraw is Initializable, OwnableUpgradeable, UUPSUpgradeable {
 		_disableInitializers();
 	}
 
-	function initialize(address protocol_) public initializer {
+	function initialize() public initializer {
 		__Ownable_init();
 		__UUPSUpgradeable_init();
-
-		protocol = protocol_;
 	}
 
 	function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
