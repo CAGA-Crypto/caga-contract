@@ -134,6 +134,7 @@ contract Core is Initializable, UUPSUpgradeable, ReentrancyGuard, Core_Getters, 
 
 		i_withdraw(_state.contracts.withdraw).protocol_withdraw(rewards);
 		i_withdraw(_state.contracts.withdraw).protocol_withdraw(protocol_rewards);
+		payable(_state.treasury).transfer(protocol_rewards);
 
 		emit Distribute_Rewards(rewards, protocol_rewards);
 	}
