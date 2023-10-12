@@ -3,14 +3,14 @@ pragma solidity ^0.8.21;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
 import "./core_getters.sol";
 import "./core_setters.sol";
 import "../interfaces/i_ls_token.sol";
 import "../interfaces/i_withdraw.sol";
 
-contract Core is Initializable, UUPSUpgradeable, ReentrancyGuard, Core_Getters, Core_Setters {
+contract Core is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeable, Core_Getters, Core_Setters {
 	/// @custom:oz-upgrades-unsafe-allow constructor
 	constructor() {
 		_disableInitializers();
@@ -26,6 +26,7 @@ contract Core is Initializable, UUPSUpgradeable, ReentrancyGuard, Core_Getters, 
 	function initialize(address ls_token, address withdraw_contract) public initializer {
 		__Ownable_init();
 		__UUPSUpgradeable_init();
+		__ReentrancyGuard_init();
 
 		_state.constants.validator_capacity = 32 ether;
 		_state.protocol_fee_percentage = 1000000000; // 10% (8 decimals)
