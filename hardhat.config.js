@@ -6,5 +6,9 @@ module.exports = {
 	solidity: "0.8.21",
 	networks: {
 		hardhat: {},
+		goerli: {
+			url: "https://rpc.ankr.com/eth_goerli",
+			accounts: [""],
+		},
 	},
 };
