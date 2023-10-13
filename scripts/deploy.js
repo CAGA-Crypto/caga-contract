@@ -3,10 +3,9 @@ const { ethers, upgrades } = require("hardhat");
 async function deploy_contract(contract_name, args = []) {
 	// Deploy contract
 	const Contract = await ethers.getContractFactory(contract_name);
-	const contract = await Contract.deploy();
 
 	// Deploy proxy
-	const Proxy = await upgrades.deployProxy(Contract, args);
+	const Proxy = await upgrades.deployProxy(Contract, args, { kind: "uups", redeployImplementation: "always" });
 	await Proxy.waitForDeployment();
 
 	const proxy_address = await Proxy.getAddress();
@@ -20,7 +19,6 @@ async function main() {
 	// Deploy Core contracts
 	const LS_Token_Proxy = await deploy_contract("LS_Token");
 	const ls_token_address = await LS_Token_Proxy.getAddress();
-	console.log("here");
 	const Withdraw_Proxy = await deploy_contract("Withdraw");
 	const withdraw_address = await Withdraw_Proxy.getAddress();
 	const Core_Proxy = await deploy_contract("Core", [ls_token_address, withdraw_address]);
