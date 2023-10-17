@@ -19,7 +19,7 @@ contract Gov_Token is Initializable, ERC20Upgradeable, ERC20PermitUpgradeable, O
 		__Ownable_init();
 		__UUPSUpgradeable_init();
 
-		_mint(msg.sender, 1000000 * 10 ** decimals());
+		_mint(msg.sender, 100000000000 * 10 ** decimals());
 	}
 
 	function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
