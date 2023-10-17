@@ -27,6 +27,7 @@ contract Core_Storage {
 		address treasury;
 		uint256 protocol_fee_percentage; // percentage of rewards to be distributed to protocol
 		uint256 protocol_rewards; // protocol rewards collected from distributing rewards
+		uint256 protocol_float;
 	}
 }
 

@@ -51,4 +51,8 @@ contract Core_Getters is Core_State {
 	function get_protocol_fee_percentage() external view returns (uint256) {
 		return _state.protocol_fee_percentage;
 	}
+
+	function get_protocol_float() external view returns (uint256) {
+		return _state.protocol_float;
+	}
 }

@@ -19,9 +19,10 @@ contract Core is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeable, Cor
 	event Deposit(address from, uint256 amount);
 	event Withdraw_Request(address from, uint256 amount);
 	event Withdraw_Claim(address to, uint256 amount);
-	event Unstake_Validator(address from, uint256 full_amount, uint256 shortfall, uint256 validators_to_unstake);
 	event Withdraw_Unstaked(uint256 amount);
 	event Distribute_Rewards(uint256 rewards, uint256 protocol_rewards);
+	event Stake_Validator(uint256 amount);
+	event Unstake_Validator(uint256 full_amount, uint256 shortfall, uint256 validators_to_unstake);
 
 	function initialize(address ls_token, address withdraw_contract) public initializer {
 		__Ownable_init();
@@ -57,6 +58,11 @@ contract Core is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeable, Cor
 		i_ls_token(_state.contracts.ls_token).mint(_msgSender(), mint_amount);
 
 		emit Deposit(_msgSender(), msg.value);
+
+		bool stakable = check_stakable();
+		if (stakable) {
+			emit Stake_Validator(address(this).balance - _state.protocol_float);
+		}
 	}
 
 	function request_withdraw(uint256 amount) external nonReentrant {
@@ -83,7 +89,7 @@ contract Core is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeable, Cor
 				_state.total_deposits -= withdraw_amount;
 				i_ls_token(_state.contracts.ls_token).burnFrom(_msgSender(), amount);
 
-				emit Unstake_Validator(_msgSender(), withdraw_amount, withdraw_amount - protocol_eth, unstake_validators);
+				emit Unstake_Validator(withdraw_amount, withdraw_amount - protocol_eth, unstake_validators);
 
 				return;
 			} else {
@@ -96,6 +102,7 @@ contract Core is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeable, Cor
 		// only core contract funds should be used to process withdrawal requests
 		distribute_rewards();
 		_state.total_deposits -= withdraw_amount;
+
 		i_ls_token(_state.contracts.ls_token).burnFrom(_msgSender(), amount);
 		payable(_msgSender()).transfer(withdraw_amount);
 
@@ -108,6 +115,7 @@ contract Core is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeable, Cor
 		require(address(this).balance >= withdraw_amount, "insufficient funds to process request");
 
 		_state.withdrawals.withdraw_account[_msgSender()] = 0;
+		_state.withdrawals.withdraw_total -= withdraw_amount;
 
 		payable(_msgSender()).transfer(withdraw_amount);
 
@@ -140,5 +148,15 @@ contract Core is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeable, Cor
 		emit Distribute_Rewards(rewards, protocol_rewards);
 	}
 
-	function stake_validator() external onlyOwner {}
+	function check_stakable() internal view returns (bool) {
+		if (address(this).balance > (_state.withdrawals.withdraw_total + _state.protocol_float + _state.constants.validator_capacity)) {
+			return true;
+		}
+
+		return false;
+	}
+
+	function stake_validator() external onlyOwner {
+		require(check_stakable(), "insufficient funds to stake to validator");
+	}
 }

@@ -35,4 +35,8 @@ contract Core_Setters is OwnableUpgradeable, Core_State {
 
 		_state.protocol_fee_percentage = _protocol_fee_percentage;
 	}
+
+	function set_protocol_float(uint256 _protocol_float) external onlyOwner {
+		_state.protocol_float = _protocol_float;
+	}
 }
