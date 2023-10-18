@@ -28,4 +28,8 @@ contract Gov_Getters is Gov_State {
 	function get_total_vp() public view returns (uint256) {
 		return _state.total_vp;
 	}
+
+	function get_user_vp(address user) public view returns (uint256) {
+		return _state.gov_data[user].voting_power;
+	}
 }
