@@ -106,7 +106,8 @@ contract Governance is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeabl
 		uint256 rate = em_vp ? _state.rate.em_rate : _state.rate.vp_rate;
 		uint256 blocks_elapsed = calculate_blocks(user) * 10 ** 18;
 		uint256 block_rate = blocks_elapsed / rate;
-		uint256 emissions = (_state.gov_data[user].staked_balance * block_rate) / 10 ** 18;
+		// emissions are calculated to 3 decimal places
+		uint256 emissions = ((_state.gov_data[user].staked_balance * block_rate) * 1000) / 10 ** 18;
 
 		return emissions;
 	}
