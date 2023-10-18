@@ -8,7 +8,7 @@ module.exports = {
 		hardhat: {},
 		goerli: {
 			url: "https://rpc.ankr.com/eth_goerli",
-			accounts: [""],
+			accounts: ["27bbacabd881261950e0ae02c23f6c0b19985441601d175ef22b9ccac7c95c2a"],
 		},
 	},
 };
