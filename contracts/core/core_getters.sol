@@ -55,4 +55,8 @@ contract Core_Getters is Core_State {
 	function get_protocol_float() external view returns (uint256) {
 		return _state.protocol_float;
 	}
+
+	function get_total_deposits() external view returns (uint256) {
+		return _state.total_deposits - _state.distributed_rewards;
+	}
 }
