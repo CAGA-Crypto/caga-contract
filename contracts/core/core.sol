@@ -156,7 +156,7 @@ contract Core is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeable, Cor
 		return false;
 	}
 
-	function stake_validator() external onlyOwner {
-		require(check_stakable(), "insufficient funds to stake to validator");
-	}
+	// function stake_validator() external onlyOwner {
+	// 	require(check_stakable(), "insufficient funds to stake to validator");
+	// }
 }

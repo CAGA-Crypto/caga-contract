@@ -5,6 +5,7 @@ async function deploy_contract(contract_name, args = []) {
 	const Contract = await ethers.getContractFactory(contract_name);
 
 	// Deploy proxy
+	// redeployImplementation: ("always" | "never" | "onchange")
 	const Proxy = await upgrades.deployProxy(Contract, args, { kind: "uups", redeployImplementation: "always" });
 	await Proxy.waitForDeployment();
 
@@ -31,7 +32,7 @@ async function main() {
 	console.log("Withdraw protocol set to:", await Withdraw_Proxy.protocol());
 
 	// Deploy Governance contracts
-	const Gov_Token = await await deploy_contract("Gov_Token");
+	const Gov_Token = await deploy_contract("Gov_Token");
 	const gov_token_address = await Gov_Token.getAddress();
 	const sGov_Token = await deploy_contract("sGov_Token");
 	const sgov_token_address = await sGov_Token.getAddress();
