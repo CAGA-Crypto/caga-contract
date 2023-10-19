@@ -39,19 +39,25 @@ contract Core is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeable, Cor
 
 	function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
-	function deposit() external payable nonReentrant {
-		require(msg.value > 0, "deposit must be greater than 0");
-
-		// calculate the amount of ls tokens to mint based on the current exchange rate
+	// calculate the amount of ls tokens to mint based on the current exchange rate
+	function calculate_deposit(uint256 amount) public view returns (uint256) {
 		(uint256 rewards, ) = get_wc_rewards();
 		uint256 protocol_eth = _state.total_deposits + rewards;
 		uint256 ls_token_supply = i_ls_token(_state.contracts.ls_token).totalSupply();
 		uint256 mint_amount;
 		if (ls_token_supply == 0) {
-			mint_amount = msg.value;
+			mint_amount = amount;
 		} else {
-			mint_amount = (ls_token_supply * msg.value) / protocol_eth;
+			mint_amount = (ls_token_supply * amount) / protocol_eth;
 		}
+
+		return mint_amount;
+	}
+
+	function deposit() external payable nonReentrant {
+		require(msg.value > 0, "deposit must be greater than 0");
+
+		uint256 mint_amount = calculate_deposit(msg.value);
 
 		_state.total_deposits += msg.value;
 
@@ -65,15 +71,21 @@ contract Core is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeable, Cor
 		}
 	}
 
-	function request_withdraw(uint256 amount) external nonReentrant {
-		require(amount > 0, "withdraw amount must be greater than 0");
-		require(i_ls_token(_state.contracts.ls_token).balanceOf(_msgSender()) >= amount, "insufficient balance");
-
-		// calculate the amount of ETH to withdraw based on the current exchange rate
+	// calculate the amount of ETH to withdraw based on the current exchange rate
+	function calculate_withdraw(uint256 amount) public view returns (uint256, uint256) {
 		(uint256 rewards, ) = get_wc_rewards();
 		uint256 protocol_eth = _state.total_deposits + rewards;
 		uint256 ls_token_supply = i_ls_token(_state.contracts.ls_token).totalSupply();
 		uint256 withdraw_amount = (protocol_eth * amount) / ls_token_supply;
+
+		return (protocol_eth, withdraw_amount);
+	}
+
+	function request_withdraw(uint256 amount) external nonReentrant {
+		require(amount > 0, "withdraw amount must be greater than 0");
+		require(i_ls_token(_state.contracts.ls_token).balanceOf(_msgSender()) >= amount, "insufficient balance");
+
+		(uint256 protocol_eth, uint256 withdraw_amount) = calculate_withdraw(amount);
 
 		emit Withdraw_Request(_msgSender(), withdraw_amount);
 
