@@ -32,7 +32,8 @@ contract Governance is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeabl
 
 		// there are 7200 blocks in 24 hours (12 secs per block)
 		_state.rate.em_rate = 7200;
-		_state.rate.vp_rate = 7200;
+		// 720000 will give us 0.01 vp per day
+		_state.rate.vp_rate = 720000;
 	}
 
 	function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
