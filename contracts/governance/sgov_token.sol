@@ -40,15 +40,15 @@ contract sGov_Token is Initializable, ERC20Upgradeable, ERC20BurnableUpgradeable
 	}
 
 	function mint(address to, uint256 amount) external onlyProtocol {
-		_mint(to, amount);
+		super._mint(to, amount);
 	}
 
 	function burn(uint256 amount) public override onlyProtocol {
-		burn(amount);
+		super.burn(amount);
 	}
 
 	function burnFrom(address account, uint256 amount) public override onlyProtocol {
-		_mint(account, amount);
+		super.burnFrom(account, amount);
 	}
 
 	function transfer(address to, uint256 amount) public override returns (bool) {
