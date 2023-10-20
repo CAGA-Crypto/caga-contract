@@ -112,7 +112,7 @@ contract Core is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeable, Cor
 			}
 		}
 		// only core contract funds should be used to process withdrawal requests
-		distribute_rewards();
+		_distribute_rewards();
 		_state.total_deposits -= withdraw_amount;
 
 		i_ls_token(_state.contracts.ls_token).burnFrom(_msgSender(), amount);
@@ -147,7 +147,7 @@ contract Core is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeable, Cor
 		}
 	}
 
-	function distribute_rewards() public nonReentrant {
+	function _distribute_rewards() internal {
 		(uint256 rewards, uint256 protocol_rewards) = get_wc_rewards();
 		_state.total_deposits += rewards;
 		_state.distributed_rewards += rewards;
@@ -158,6 +158,10 @@ contract Core is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeable, Cor
 		payable(_state.treasury).transfer(protocol_rewards);
 
 		emit Distribute_Rewards(rewards, protocol_rewards);
+	}
+
+	function distribute_rewards() public nonReentrant {
+		_distribute_rewards();
 	}
 
 	function check_stakable() internal view returns (bool) {
