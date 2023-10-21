@@ -17,12 +17,21 @@ async function deploy_contract(contract_name, args = []) {
 }
 
 async function main() {
+	let abyss_eth2_depositor;
+	if (network.name == "mainnet") {
+		abyss_eth2_depositor = "0xFA5f9EAa65FFb2A75de092eB7f3fc84FC86B5b18";
+	} else if (network.name == "goerli") {
+		abyss_eth2_depositor = "0x2cB1A746A8652dfbb0FC11BdA71Bd991EB2Fd52e";
+	} else {
+		abyss_eth2_depositor = "0x0000000000000000000000000000000000012345";
+	}
+
 	// Deploy Core contracts
 	const LS_Token_Proxy = await deploy_contract("LS_Token");
 	const ls_token_address = await LS_Token_Proxy.getAddress();
 	const Withdraw_Proxy = await deploy_contract("Withdraw");
 	const withdraw_address = await Withdraw_Proxy.getAddress();
-	const Core_Proxy = await deploy_contract("Core", [ls_token_address, withdraw_address]);
+	const Core_Proxy = await deploy_contract("Core", [ls_token_address, withdraw_address, abyss_eth2_depositor]);
 	const core_address = await Core_Proxy.getAddress();
 
 	// Configure protocol addresses for core contracts

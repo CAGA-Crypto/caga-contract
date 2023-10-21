@@ -26,6 +26,10 @@ contract Core_Setters is OwnableUpgradeable, Core_State {
 		_state.contracts.withdraw = _withdraw;
 	}
 
+	function set_abyss_eth2_depositor_contract(address _abyss_eth2_depositor) external onlyOwner non_zero_address(_abyss_eth2_depositor) {
+		_state.contracts.abyss_eth2_depositor = _abyss_eth2_depositor;
+	}
+
 	function set_treasury_address(address _treasury) external onlyOwner non_zero_address(_treasury) {
 		_state.treasury = _treasury;
 	}

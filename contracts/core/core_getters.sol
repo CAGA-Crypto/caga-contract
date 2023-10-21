@@ -17,6 +17,10 @@ contract Core_Getters is Core_State {
 		return _state.contracts.withdraw;
 	}
 
+	function get_abyss_eth2_depositor_contract() external view returns (address) {
+		return _state.contracts.abyss_eth2_depositor;
+	}
+
 	// get withdraw contract rewards and protocol rewards
 	// calculates rewards not moved to the core contract yet
 	function get_wc_rewards() public view returns (uint256, uint256) {

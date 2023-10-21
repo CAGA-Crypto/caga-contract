@@ -10,12 +10,13 @@ contract Core_Storage {
 	struct Contracts {
 		address ls_token;
 		address withdraw;
+		address abyss_eth2_depositor;
 	}
 
 	struct Withdrawals {
 		mapping(address => uint256) withdraw_account;
 		uint256 withdraw_total;
-		uint256 unstaked_validators;
+		uint256 unstaked_validators; // number of validators pending full withdrawal
 	}
 
 	struct State {
@@ -28,6 +29,7 @@ contract Core_Storage {
 		uint256 protocol_fee_percentage; // percentage of rewards to be distributed to protocol
 		uint256 protocol_rewards; // protocol rewards collected from distributing rewards
 		uint256 protocol_float;
+		uint256 validator_index;
 	}
 }
 
