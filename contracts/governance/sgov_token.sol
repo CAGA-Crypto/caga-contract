@@ -19,10 +19,10 @@ contract sGov_Token is Initializable, ERC20Upgradeable, ERC20BurnableUpgradeable
 	}
 
 	function initialize() public initializer {
-		__ERC20_init("sCAGA", "sCAGA");
+		__ERC20_init("cgCAGA", "cgCAGA");
 		__ERC20Burnable_init();
 		__Ownable_init();
-		__ERC20Permit_init("sCAGA");
+		__ERC20Permit_init("cgCAGA");
 		__UUPSUpgradeable_init();
 	}
 
