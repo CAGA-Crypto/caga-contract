@@ -10,7 +10,7 @@ async function get_contract(contract_name, contract_address) {
 }
 
 async function main() {
-	// Deploy Core contracts
+	// Get contract instances
 	const LS_Token_Proxy = await get_contract("LS_Token", process.env.LS_TOKEN);
 	const Withdraw_Proxy = await get_contract("Withdraw", process.env.WITHDRAW);
 	const Core_Proxy = await get_contract("Core", process.env.CORE);
