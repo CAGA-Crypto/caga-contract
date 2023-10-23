@@ -30,8 +30,10 @@ contract Governance is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeabl
 		_state.contracts.gov_token = gov_token;
 		_state.contracts.sgov_token = sgov_token;
 
+		// number of tokens to emit per block distributed among stakers depending on their share of the total staked
+		// defaults to 1 token per day distributed among stakers
+		_state.rate.em_rate = 1 * 10 ** 18;
 		// there are 7200 blocks in 24 hours (12 secs per block)
-		_state.rate.em_rate = 7200;
 		// 720000 will give us 0.01 vp per day
 		_state.rate.vp_rate = 720000;
 	}
@@ -47,10 +49,10 @@ contract Governance is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeabl
 		require(amount > 0, "amount must be greater than 0");
 
 		if (_state.gov_data[user].is_staking) {
-			uint256 realised_emission = calculate_em_vp(user, true);
+			uint256 realised_emission = calculate_emissions(user);
 			_state.gov_data[user].realised_emissions += realised_emission;
 
-			uint256 realised_vp = calculate_em_vp(user, false);
+			uint256 realised_vp = calculate_vp(user);
 			_state.gov_data[user].voting_power += realised_vp;
 			_state.total_vp += realised_vp;
 		}
@@ -58,6 +60,7 @@ contract Governance is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeabl
 		_state.gov_data[user].staked_balance += amount;
 		_state.gov_data[user].start_block = block.number;
 		_state.gov_data[user].is_staking = true;
+		_state.total_staked += amount;
 	}
 
 	function stake(uint256 amount) external nonReentrant {
@@ -72,15 +75,16 @@ contract Governance is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeabl
 	function _unstake(address user, uint256 amount) internal {
 		require(_state.gov_data[user].is_staking && _state.gov_data[user].staked_balance >= amount, "invalid unstake amount");
 
-		uint256 realised_emission = calculate_em_vp(user, true);
+		uint256 realised_emission = calculate_emissions(user);
 		_state.gov_data[user].realised_emissions += realised_emission;
 
-		uint256 realised_vp = calculate_em_vp(user, false);
+		uint256 realised_vp = calculate_vp(user);
 		_state.gov_data[user].voting_power += realised_vp;
 		_state.total_vp += realised_vp;
 
 		_state.gov_data[user].start_block = block.number;
 		_state.gov_data[user].staked_balance -= amount;
+		_state.total_staked -= amount;
 
 		if (_state.gov_data[user].staked_balance == 0) {
 			_state.gov_data[user].is_staking = false;
@@ -103,18 +107,26 @@ contract Governance is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeabl
 		return blocks_elapsed;
 	}
 
-	function calculate_em_vp(address user, bool em_vp) internal view returns (uint256) {
-		uint256 rate = em_vp ? _state.rate.em_rate : _state.rate.vp_rate;
+	// emission rate supports 18 decimals
+	function calculate_emissions(address user) internal view returns (uint256) {
 		uint256 blocks_elapsed = calculate_blocks(user) * 10 ** 18;
-		uint256 block_rate = blocks_elapsed / rate;
-		// emissions are calculated to 3 decimal places
+		uint256 current_emitted = _state.rate.em_rate * blocks_elapsed;
+		uint256 emissions = ((_state.gov_data[user].staked_balance * current_emitted) / _state.total_staked) / 10 ** 18;
+
+		return emissions;
+	}
+
+	// vp is calculated to 3 decimal places
+	function calculate_vp(address user) internal view returns (uint256) {
+		uint256 blocks_elapsed = calculate_blocks(user) * 10 ** 18;
+		uint256 block_rate = blocks_elapsed / _state.rate.vp_rate;
 		uint256 emissions = ((_state.gov_data[user].staked_balance * block_rate) * 1000) / 10 ** 18;
 
 		return emissions;
 	}
 
 	function claim() external nonReentrant {
-		uint256 realised_emission = calculate_em_vp(_msgSender(), true);
+		uint256 realised_emission = calculate_emissions(_msgSender());
 
 		require(realised_emission > 0 || _state.gov_data[_msgSender()].realised_emissions > 0, "no rewards to claim");
 
@@ -123,7 +135,7 @@ contract Governance is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeabl
 			_state.gov_data[_msgSender()].realised_emissions = 0;
 		}
 
-		uint256 realised_vp = calculate_em_vp(_msgSender(), false);
+		uint256 realised_vp = calculate_vp(_msgSender());
 		_state.gov_data[_msgSender()].voting_power += realised_vp;
 		_state.total_vp += realised_vp;
 
