@@ -26,6 +26,7 @@ contract Gov_Token is Initializable, ERC20Upgradeable, ERC20PermitUpgradeable, O
 		__Ownable_init();
 		__UUPSUpgradeable_init();
 
+		// 100b
 		_mint(msg.sender, 100000000000 * 10 ** decimals());
 	}
 
