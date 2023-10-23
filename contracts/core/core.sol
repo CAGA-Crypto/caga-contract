@@ -180,19 +180,28 @@ contract Core is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeable, Cor
 		return false;
 	}
 
+	function slice(bytes memory data, uint start, uint len) internal pure returns (bytes memory) {
+		bytes memory b = new bytes(len);
+
+		for (uint i = 0; i < len; i++) {
+			b[i] = data[i + start];
+		}
+
+		return b;
+	}
+
 	function stake_validators(
 		bytes[] calldata pubkeys,
 		bytes[] calldata withdrawal_credentials,
 		bytes[] calldata signatures,
 		bytes32[] calldata deposit_data_roots
 	) external nonReentrant {
-		// validate withdrawal_credentials is the same as withdrawal contract address
-		// for (uint256 i = 0; i < withdrawal_credentials.length; i++) {
-		// 	require(
-		// 		address(uint160(uint256(keccak256(abi.encodePacked(withdrawal_credentials[i]))))) == _state.contracts.withdraw,
-		// 		"invalid withdrawal credentials"
-		// 	);
-		// }
+		// validate withdrawal_credentials is/are the same as withdrawal contract address
+		for (uint256 i = 0; i < withdrawal_credentials.length; i++) {
+			// Extract the address from the withdrawal_credentials
+			address extractedAddress = address(uint160(uint256(keccak256(slice(withdrawal_credentials[i], 12, 20)))));
+			require(extractedAddress == _state.contracts.withdraw, "invalid withdrawal credentials");
+		}
 		require(check_stakable(), "insufficient funds to stake to validator");
 
 		uint256 num_of_validators = (address(this).balance - _state.withdrawals.withdraw_total - _state.protocol_float) /
