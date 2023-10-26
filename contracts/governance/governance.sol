@@ -120,9 +120,9 @@ contract Governance is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeabl
 	function calculate_vp(address user) internal view returns (uint256) {
 		uint256 blocks_elapsed = calculate_blocks(user) * 10 ** 18;
 		uint256 block_rate = blocks_elapsed / _state.rate.vp_rate;
-		uint256 emissions = ((_state.gov_data[user].staked_balance * block_rate) * 1000) / 10 ** 18;
+		uint256 vp = ((_state.gov_data[user].staked_balance * block_rate) * 1000) / 10 ** 18;
 
-		return emissions;
+		return vp;
 	}
 
 	function claim() external nonReentrant {
