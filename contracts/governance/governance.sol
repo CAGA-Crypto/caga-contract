@@ -31,8 +31,8 @@ contract Governance is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeabl
 		_state.contracts.sgov_token = sgov_token;
 
 		// number of tokens to emit per block distributed among stakers depending on their share of the total staked
-		// defaults to 1 token per day distributed among stakers
-		_state.rate.em_rate = 1 * 10 ** 18;
+		// defaults to ~1 token per day distributed among stakers
+		_state.rate.em_rate =  uint256(1 * 10 ** 18) / 7200;
 		// there are 7200 blocks in 24 hours (12 secs per block)
 		// 720000 will give us 0.01 vp per day
 		_state.rate.vp_rate = 720000;
@@ -40,8 +40,8 @@ contract Governance is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeabl
 
 	function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
-	modifier onlyGovToken() {
-		require(_msgSender() == _state.contracts.gov_token, "caller is not gov token contract");
+	modifier onlySGovToken() {
+		require(_msgSender() == _state.contracts.sgov_token, "caller is not staked governance token contract");
 		_;
 	}
 
@@ -146,7 +146,7 @@ contract Governance is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeabl
 		emit Claim_Rewards(_msgSender(), realised_emission);
 	}
 
-	function transfer_stake(address from, address to, uint256 amount) external nonReentrant onlyGovToken {
+	function transfer_stake(address from, address to, uint256 amount) external nonReentrant onlySGovToken {
 		_unstake(from, amount);
 		_stake(to, amount);
 
