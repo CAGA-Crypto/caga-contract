@@ -16,10 +16,10 @@ contract Gov_Setters is OwnableUpgradeable, Gov_State {
 	}
 
 	function set_emission_rate(uint256 _emission_rate) external onlyOwner {
-		_state.rate.em_rate = _emission_rate;
+		_state.emission.em_rate = _emission_rate;
 	}
 
 	function set_vp_rate(uint256 _vp_rate) external onlyOwner {
-		_state.rate.vp_rate = _vp_rate;
+		_state.vp_rate = _vp_rate;
 	}
 }

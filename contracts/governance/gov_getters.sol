@@ -3,6 +3,7 @@
 pragma solidity ^0.8.21;
 
 import "./gov_state.sol";
+import "../interfaces/i_gov_token.sol";
 
 contract Gov_Getters is Gov_State {
 	function get_gov_token() external view returns (address) {
@@ -14,27 +15,37 @@ contract Gov_Getters is Gov_State {
 	}
 
 	function get_emission_rate() external view returns (uint256) {
-		return _state.rate.em_rate;
+		return _state.emission.em_rate;
 	}
 
 	function get_vp_rate() external view returns (uint256) {
-		return _state.rate.vp_rate;
+		return _state.vp_rate;
 	}
 
-	function get_user_data(address user) external view returns (Gov_Storage.Gov_Data memory) {
-		return _state.gov_data[user];
-	}
-
-	function get_user_staked_balance(address user) external view returns (uint256) {
-		return _state.gov_data[user].staked_balance;
+	function get_user_data(address user) external view returns (Gov_Storage.User_Data memory) {
+		return _state.user_data[user];
 	}
 
 	function get_total_staked() external view returns (uint256) {
 		return _state.total_staked;
 	}
 
+	function get_pending_emissions(address user) external view returns (uint256) {
+		uint256 acc_emissions_per_share;
+		if (block.number > _state.emission.last_emissions_block) {
+			uint256 blocks_elapsed = block.number - _state.emission.last_emissions_block;
+			uint256 emissions = blocks_elapsed * _state.emission.em_rate;
+			if (_state.total_staked > 0) {
+				acc_emissions_per_share += (emissions * 1e18) / _state.total_staked;
+			}
+		}
+		uint256 pending = ((_state.user_data[user].staked_balance * acc_emissions_per_share) / 1e18) - _state.user_data[user].emissions_debt;
+
+		return pending;
+	}
+
 	function get_user_vp(address user) external view returns (uint256) {
-		return _state.gov_data[user].voting_power;
+		return _state.user_data[user].voting_power;
 	}
 
 	function get_total_vp() external view returns (uint256) {

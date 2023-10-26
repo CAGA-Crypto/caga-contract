@@ -8,25 +8,27 @@ contract Gov_Storage {
 		address sgov_token;
 	}
 
-	struct Rate {
+	struct Emission {
 		uint256 em_rate;
-		uint256 vp_rate;
+		uint256 acc_emissions_per_share;
+		uint256 last_emissions_block;
 	}
 
-	struct Gov_Data {
+	struct User_Data {
 		bool is_staking;
-		uint256 start_block;
 		uint256 staked_balance;
-		// realised emissions waiting to be minted (need this to track emissions when user updates staked balance)
-		uint256 realised_emissions;
+		uint256 emissions_debt;
+		uint256 unclaimed_emissions;
+		uint256 last_vp_block;
 		uint256 voting_power;
 	}
 
 	struct State {
 		Contracts contracts;
-		Rate rate;
-		mapping(address => Gov_Data) gov_data;
+		mapping(address => User_Data) user_data;
+		Emission emission;
 		uint256 total_staked;
+		uint256 vp_rate;
 		uint256 total_vp;
 	}
 }
