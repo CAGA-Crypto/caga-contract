@@ -46,6 +46,6 @@ contract LS_Token is Initializable, ERC20Upgradeable, ERC20BurnableUpgradeable, 
 	}
 
 	function burnFrom(address account, uint256 amount) public override onlyProtocol {
-		super.burnFrom(account, amount);
+		_burn(account, amount);
 	}
 }
