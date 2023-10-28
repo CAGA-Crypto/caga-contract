@@ -61,6 +61,20 @@ describe("LS_Token", function () {
 		});
 	});
 
+	describe("only protocol can burn and mint", function () {
+		it("burn", async function () {
+			await expect(lsToken.burn(1000)).to.be.revertedWith("caller is not the protocol");
+		});
+
+		it("burnFrom", async function () {
+			await expect(lsToken.burnFrom(account3.address, 1000)).to.be.revertedWith("caller is not the protocol");
+		});
+
+		it("mint", async function () {
+			await expect(lsToken.mint(account3.address, 1000)).to.be.revertedWith("caller is not the protocol");
+		});
+	});
+
 	describe("permit", function () {
 		// it("should permit tokens", async function () {
 		// 	const nonce = await lsToken.nonces(owner.address);
