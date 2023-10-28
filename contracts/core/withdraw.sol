@@ -20,6 +20,8 @@ contract Withdraw is Initializable, OwnableUpgradeable, UUPSUpgradeable {
 
 	function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
+	receive() external payable {}
+
 	modifier onlyProtocol() {
 		require(_msgSender() == protocol, "caller is not the protocol");
 		_;
