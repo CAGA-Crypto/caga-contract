@@ -35,9 +35,11 @@ async function main() {
 	const core_address = await Core_Proxy.getAddress();
 
 	// Configure protocol addresses for core contracts
-	await LS_Token_Proxy.set_protocol(core_address);
+	let response = await LS_Token_Proxy.set_protocol(core_address);
+	await response.wait();
 	console.log("LS_Token protocol set to:", await LS_Token_Proxy.protocol());
-	await Withdraw_Proxy.set_protocol(core_address);
+	response = await Withdraw_Proxy.set_protocol(core_address);
+	await response.wait();
 	console.log("Withdraw protocol set to:", await Withdraw_Proxy.protocol());
 
 	// Deploy Governance contracts
@@ -49,7 +51,8 @@ async function main() {
 	const governance_address = await Governance.getAddress();
 
 	// Configure protocol address for sGov_Token contract
-	await sGov_Token.set_protocol(governance_address);
+	response = await sGov_Token.set_protocol(governance_address);
+	await response.wait();
 	console.log("sGov_Token protocol set to:", await sGov_Token.protocol());
 }
 
