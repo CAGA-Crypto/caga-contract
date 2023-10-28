@@ -7,9 +7,7 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
-interface IAntisnipe {
-	function assureCanTransfer(address sender, address from, address to, uint256 amount) external;
-}
+import "../interfaces/i_Antisnipe.sol";
 
 contract Gov_Token is Initializable, ERC20Upgradeable, ERC20PermitUpgradeable, OwnableUpgradeable, UUPSUpgradeable {
 	IAntisnipe public antisnipe;
@@ -26,7 +24,7 @@ contract Gov_Token is Initializable, ERC20Upgradeable, ERC20PermitUpgradeable, O
 		__Ownable_init();
 		__UUPSUpgradeable_init();
 
-		// 100b
+		// 100 billion
 		_mint(msg.sender, 100000000000 * 10 ** decimals());
 	}
 
