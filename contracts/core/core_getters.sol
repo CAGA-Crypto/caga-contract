@@ -26,7 +26,10 @@ contract Core_Getters is Core_State {
 	function get_wc_rewards() public view returns (uint256, uint256) {
 		uint256 rewards;
 		if (_state.withdrawals.withdraw_total > 0) {
-			uint256 unstaked_validators = _state.contracts.withdraw.balance / _state.constants.validator_capacity;
+			uint256 unstaked_validators;
+			if (_state.contracts.withdraw.balance > 0) {
+				unstaked_validators = _state.contracts.withdraw.balance / _state.constants.validator_capacity;
+			}
 			if (unstaked_validators > 0) {
 				rewards = _state.contracts.withdraw.balance - (unstaked_validators * _state.constants.validator_capacity);
 			} else {
