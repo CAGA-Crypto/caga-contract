@@ -2,7 +2,18 @@ const { ethers, upgrades } = require("hardhat");
 const { expect } = require("chai");
 
 describe("Governance", function () {
-	let Governance, Governance2, governance, governance_address, owner, addr1, addr2, addr3, govToken, sGovToken, gov_token_address, sgov_token_address;
+	let Governance;
+	let Governance2;
+	let governance;
+	let governance_address;
+	let owner;
+	let addr1;
+	let addr2;
+	let addr3;
+	let govToken;
+	let sGovToken;
+	let gov_token_address;
+	let sgov_token_address;
 
 	beforeEach(async function () {
 		[owner, addr1, addr2, addr3] = await ethers.getSigners();
