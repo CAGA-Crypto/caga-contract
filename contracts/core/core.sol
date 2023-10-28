@@ -79,37 +79,39 @@ contract Core is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeable, Cor
 	}
 
 	// calculate the amount of ETH to withdraw based on the current exchange rate
-	function calculate_withdraw(uint256 amount) public view returns (uint256, uint256) {
+	function calculate_withdraw(uint256 amount) public view returns (uint256) {
 		(uint256 rewards, ) = get_wc_rewards();
+		// Note that protocol_eth is the total ETH circulating in the protocol, including within the validators
 		uint256 protocol_eth = _state.total_deposits + rewards;
 		uint256 ls_token_supply = i_ls_token(_state.contracts.ls_token).totalSupply();
 		uint256 withdraw_amount = (protocol_eth * amount) / ls_token_supply;
 
-		return (protocol_eth, withdraw_amount);
+		return withdraw_amount;
 	}
 
 	function request_withdraw(uint256 amount) external nonReentrant {
 		require(amount > 0, "withdraw amount must be greater than 0");
 		require(i_ls_token(_state.contracts.ls_token).balanceOf(_msgSender()) >= amount, "insufficient balance");
 
-		(uint256 protocol_eth, uint256 withdraw_amount) = calculate_withdraw(amount);
+		uint256 withdraw_amount = calculate_withdraw(amount);
+		uint256 core_withdraw_eth = address(this).balance + _state.contracts.withdraw.balance - _state.withdrawals.withdraw_total;
 
 		emit Withdraw_Request(_msgSender(), withdraw_amount);
 
 		// core contract does not have enough ETH to process withdrawal request
 		if (withdraw_amount > address(this).balance) {
 			// both core and withdraw contract does not have enough ETH to process this withdrawal request (need to unwind from validator)
-			if (withdraw_amount > protocol_eth) {
+			if (withdraw_amount > core_withdraw_eth) {
 				_state.withdrawals.withdraw_account[_msgSender()] += withdraw_amount;
 				_state.withdrawals.withdraw_total += withdraw_amount;
-				uint256 unstake_validators = (withdraw_amount - protocol_eth) / _state.constants.validator_capacity;
-				if ((withdraw_amount - protocol_eth) % _state.constants.validator_capacity > 0) unstake_validators++;
+				uint256 unstake_validators = (withdraw_amount - core_withdraw_eth) / _state.constants.validator_capacity;
+				if ((withdraw_amount - core_withdraw_eth) % _state.constants.validator_capacity > 0) unstake_validators++;
 				_state.withdrawals.unstaked_validators += unstake_validators;
 
 				_state.total_deposits -= withdraw_amount;
 				i_ls_token(_state.contracts.ls_token).burnFrom(_msgSender(), amount);
 
-				emit Unstake_Validator(withdraw_amount, withdraw_amount - protocol_eth, unstake_validators);
+				emit Unstake_Validator(withdraw_amount, withdraw_amount - core_withdraw_eth, unstake_validators);
 
 				return;
 			} else {
@@ -142,6 +144,7 @@ contract Core is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeable, Cor
 		emit Withdraw_Claim(_msgSender(), withdraw_amount);
 	}
 
+	// Move unstaked validator funds from withdraw contract to core contract
 	function _withdraw_unstaked() internal {
 		require(_state.withdrawals.unstaked_validators > 0, "no existing unstaked validators");
 		// move unstaked ETH from withdraw contract to core contract to ensure withdraw contract funds are not mixed with rewards
