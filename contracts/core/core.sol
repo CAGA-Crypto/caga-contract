@@ -146,19 +146,21 @@ contract Core is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeable, Cor
 
 	// Move unstaked validator funds from withdraw contract to core contract
 	function _withdraw_unstaked() internal {
-		require(_state.withdrawals.unstaked_validators > 0, "no existing unstaked validators");
-		// move unstaked ETH from withdraw contract to core contract to ensure withdraw contract funds are not mixed with rewards
-		uint256 unstaked_validators = _state.contracts.withdraw.balance / _state.constants.validator_capacity;
-		if (unstaked_validators > 0) {
-			_state.withdrawals.unstaked_validators -= unstaked_validators;
-			uint256 unstaked_amount = unstaked_validators * _state.constants.validator_capacity;
-			i_withdraw(_state.contracts.withdraw).protocol_withdraw(unstaked_amount);
+		if (_state.withdrawals.unstaked_validators > 0) {
+			// move unstaked ETH from withdraw contract to core contract to ensure withdraw contract funds are not mixed with rewards
+			uint256 unstaked_validators = _state.contracts.withdraw.balance / _state.constants.validator_capacity;
+			if (unstaked_validators > 0) {
+				_state.withdrawals.unstaked_validators -= unstaked_validators;
+				uint256 unstaked_amount = unstaked_validators * _state.constants.validator_capacity;
+				i_withdraw(_state.contracts.withdraw).protocol_withdraw(unstaked_amount);
 
-			emit Withdraw_Unstaked(unstaked_amount);
+				emit Withdraw_Unstaked(unstaked_amount);
+			}
 		}
 	}
 
 	function withdraw_unstaked() external nonReentrant {
+		require(_state.withdrawals.unstaked_validators > 0, "no existing unstaked validators");
 		_withdraw_unstaked();
 	}
 
