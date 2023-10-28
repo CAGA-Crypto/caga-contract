@@ -47,6 +47,29 @@ contract Governance is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeabl
 		_;
 	}
 
+	function update_accumulated_emissions() internal {
+		if (block.number > _state.emission.last_emissions_block) {
+			if (_state.total_staked > 0) {
+				uint256 blocks_elapsed = block.number - _state.emission.last_emissions_block;
+				uint256 emissions = blocks_elapsed * _state.emission.em_rate;
+				_state.emission.acc_emissions_per_share += (emissions * 1e18) / _state.total_staked;
+			} else {
+				// if there are no stakers, reset the accumulated emissions per share
+				_state.emission.acc_emissions_per_share = 0;
+			}
+			_state.emission.last_emissions_block = block.number;
+		}
+	}
+
+	// vp is calculated to 3 decimal places
+	function calculate_vp(address user) internal view returns (uint256) {
+		uint256 blocks_elapsed = (block.number - _state.user_data[user].last_vp_block) * 1e18;
+		uint256 block_rate = blocks_elapsed / _state.vp_rate;
+		uint256 vp = ((_state.user_data[user].staked_balance * block_rate) * 1000) / 1e18;
+
+		return vp;
+	}
+
 	function _stake(address user, uint256 amount) internal {
 		require(amount > 0, "amount must be greater than 0");
 
@@ -61,11 +84,12 @@ contract Governance is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeabl
 		}
 
 		_state.user_data[user].is_staking = true;
-		_state.user_data[_msgSender()].last_vp_block = block.number;
-
-		_state.user_data[user].staked_balance += amount;
-		_state.user_data[user].emissions_debt += (amount * _state.emission.acc_emissions_per_share) / 1e18;
 		_state.total_staked += amount;
+		_state.user_data[user].staked_balance += amount;
+
+		_state.user_data[user].emissions_debt += (amount * _state.emission.acc_emissions_per_share) / 1e18;
+
+		_state.user_data[_msgSender()].last_vp_block = block.number;
 	}
 
 	function stake(uint256 amount) external nonReentrant {
@@ -83,15 +107,9 @@ contract Governance is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeabl
 		update_accumulated_emissions();
 
 		uint256 acc_emissions = (_state.user_data[user].staked_balance * _state.emission.acc_emissions_per_share) / 1e18;
-    	// Account for unclaimed emissions
     	_state.user_data[user].unclaimed_emissions += acc_emissions - _state.user_data[user].emissions_debt;
+		_state.user_data[user].emissions_debt = acc_emissions - ((amount * _state.emission.acc_emissions_per_share) / 1e18);
 
-		uint256 unstake_debt = (amount * _state.emission.acc_emissions_per_share) / 1e18;
-		if (_state.user_data[user].emissions_debt < unstake_debt) {
-			unstake_debt = _state.user_data[user].emissions_debt; // Adjust to prevent underflow
-		}
-
-		_state.user_data[user].emissions_debt -= unstake_debt;
 		_state.user_data[user].staked_balance -= amount;
 		_state.total_staked -= amount;
 
@@ -114,38 +132,14 @@ contract Governance is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeabl
 		emit Unstake(_msgSender(), amount);
 	}
 
-	function update_accumulated_emissions() internal {
-		if (block.number > _state.emission.last_emissions_block) {
-			uint256 blocks_elapsed = block.number - _state.emission.last_emissions_block;
-			uint256 emissions = blocks_elapsed * _state.emission.em_rate;
-			if (_state.total_staked > 0) {
-				_state.emission.acc_emissions_per_share += (emissions * 1e18) / _state.total_staked;
-			} else {
-				// if there are no stakers, reset the accumulated emissions per share
-				_state.emission.acc_emissions_per_share = 0;
-			}
-			_state.emission.last_emissions_block = block.number;
-		}
-	}
-
-	// vp is calculated to 3 decimal places
-	function calculate_vp(address user) internal view returns (uint256) {
-		uint256 blocks_elapsed = (block.number - _state.user_data[user].last_vp_block) * 1e18;
-		uint256 block_rate = blocks_elapsed / _state.vp_rate;
-		uint256 vp = ((_state.user_data[user].staked_balance * block_rate) * 1000) / 1e18;
-
-		return vp;
-	}
-
 	function claim() external nonReentrant {
 		update_accumulated_emissions();
 
 		uint256 acc_emissions = (_state.user_data[_msgSender()].staked_balance * _state.emission.acc_emissions_per_share) / 1e18;
-		uint256 pending_emissions = acc_emissions - _state.user_data[_msgSender()].emissions_debt + _state.user_data[_msgSender()].unclaimed_emissions;
+		uint256 pending_emissions = acc_emissions + _state.user_data[_msgSender()].unclaimed_emissions - _state.user_data[_msgSender()].emissions_debt;
 
 		_state.user_data[_msgSender()].unclaimed_emissions = 0;
 
-		require(pending_emissions > 0, "no rewards to claim");
 		require((i_gov_token(_state.contracts.gov_token).balanceOf(address(this)) - _state.total_staked) >= pending_emissions, "insufficent emissions for distribution");
 
 		_state.user_data[_msgSender()].emissions_debt = acc_emissions;
@@ -155,7 +149,9 @@ contract Governance is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeabl
 		_state.total_vp += realised_vp;
 		_state.user_data[_msgSender()].last_vp_block = block.number;
 
-		SafeERC20.safeTransfer(i_gov_token(_state.contracts.gov_token), _msgSender(), pending_emissions);
+		if (pending_emissions > 0) {
+			SafeERC20.safeTransfer(i_gov_token(_state.contracts.gov_token), _msgSender(), pending_emissions);
+		}
 
 		emit Claim_Rewards(_msgSender(), pending_emissions);
 	}

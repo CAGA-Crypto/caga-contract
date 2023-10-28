@@ -225,7 +225,7 @@ describe("Governance", function () {
 
 			expect(actualEmission).to.be.closeTo(estimatedEmissions, ethers.parseEther("0.001"));
 		});
-		/*
+
 		it("should correctly generate emissions with multiple users staking and unstaking in various orders", async function () {
 			// User 1 stakes
 			await governance.connect(addr1).stake(ethers.parseEther("100"));
@@ -301,6 +301,7 @@ describe("Governance", function () {
 			const actualEmission1 = await govToken.balanceOf(addr1.address);
 			const actualEmission2 = await govToken.balanceOf(addr2.address);
 			const actualEmission3 = await govToken.balanceOf(addr3.address);
+
 			const totalEmission = actualEmission1 + actualEmission2 + actualEmission3 - ethers.parseEther("150");
 
 			const blocksElapsed = 7211n;
@@ -308,7 +309,7 @@ describe("Governance", function () {
 
 			expect(totalEmission).to.be.closeTo(estimatedEmissions, ethers.parseEther("0.001"));
 		});
-		
+		/*
 		it("should correctly generate voting power after staking", async function () {
 			await governance.connect(addr1).stake(ethers.parseEther("100"));
 
