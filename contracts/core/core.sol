@@ -42,6 +42,10 @@ contract Core is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeable, Cor
 
 	function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
+	receive() external payable {
+		require(_msgSender() == _state.contracts.withdraw, "invalid sender");
+	}
+
 	// calculate the amount of ls tokens to mint based on the current exchange rate
 	function calculate_deposit(uint256 amount) public view returns (uint256) {
 		(uint256 rewards, ) = get_wc_rewards();
@@ -161,8 +165,7 @@ contract Core is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeable, Cor
 		_state.distributed_rewards += rewards;
 		_state.protocol_rewards += protocol_rewards;
 
-		i_withdraw(_state.contracts.withdraw).protocol_withdraw(rewards);
-		i_withdraw(_state.contracts.withdraw).protocol_withdraw(protocol_rewards);
+		i_withdraw(_state.contracts.withdraw).protocol_withdraw(rewards + protocol_rewards);
 		payable(_state.treasury).transfer(protocol_rewards);
 
 		emit Distribute_Rewards(rewards, protocol_rewards);
