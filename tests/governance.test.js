@@ -322,6 +322,64 @@ describe("Governance", function () {
 
 			expect(totalEmission).to.be.closeTo(estimatedEmissions, ethers.parseEther("0.001"));
 		});
+
+		it("should stop accumulating emissions after fully transferring stake (transfer)", async function () {
+			await governance.connect(addr1).stake(ethers.parseEther("100"));
+
+			for (let i = 0; i < 7200; i++) {
+				await ethers.provider.send("evm_mine");
+			}
+
+			await sGovToken.connect(addr1).transfer(addr2.address, ethers.parseEther("100"));
+			await governance.connect(addr1).claim();
+
+			for (let i = 0; i < 7200; i++) {
+				await ethers.provider.send("evm_mine");
+			}
+
+			await governance.connect(addr2).claim();
+
+			expect(await governance.get_pending_emissions(addr1.address)).to.equal(0);
+			const balance1 = await govToken.balanceOf(addr1.address);
+			await governance.connect(addr1).claim();
+			expect(await govToken.balanceOf(addr1.address)).to.equal(balance1);
+
+			const estimatedEmissions2 = 7201n * (await governance.get_emission_rate()) + ethers.parseEther("100");
+			expect(await govToken.balanceOf(addr2.address)).to.be.closeTo(estimatedEmissions2, ethers.parseEther("0.001"));
+
+			expect(await sGovToken.balanceOf(addr1.address)).to.equal(0);
+			expect(await sGovToken.balanceOf(addr2.address)).to.equal(ethers.parseEther("100"));
+		});
+
+		it("should stop accumulating emissions after fully transferring stake (transferFrom)", async function () {
+			await governance.connect(addr1).stake(ethers.parseEther("100"));
+
+			for (let i = 0; i < 7200; i++) {
+				await ethers.provider.send("evm_mine");
+			}
+
+			await sGovToken.connect(addr1).approve(addr2.address, ethers.parseEther("100"));
+			await sGovToken.connect(addr2).transferFrom(addr1.address, addr2.address, ethers.parseEther("100"));
+
+			await governance.connect(addr1).claim();
+
+			for (let i = 0; i < 7200; i++) {
+				await ethers.provider.send("evm_mine");
+			}
+
+			await governance.connect(addr2).claim();
+
+			expect(await governance.get_pending_emissions(addr1.address)).to.equal(0);
+			const balance1 = await govToken.balanceOf(addr1.address);
+			await governance.connect(addr1).claim();
+			expect(await govToken.balanceOf(addr1.address)).to.equal(balance1);
+
+			const estimatedEmissions2 = 7201n * (await governance.get_emission_rate()) + ethers.parseEther("100");
+			expect(await govToken.balanceOf(addr2.address)).to.be.closeTo(estimatedEmissions2, ethers.parseEther("0.001"));
+
+			expect(await sGovToken.balanceOf(addr1.address)).to.equal(0);
+			expect(await sGovToken.balanceOf(addr2.address)).to.equal(ethers.parseEther("100"));
+		});
 	});
 
 	describe("voting power calculations", function () {
@@ -528,6 +586,9 @@ describe("Governance", function () {
 
 			expect(expectedVP1).to.equal(actualVP1);
 			expect(expectedVP2).to.equal(actualVP2);
+
+			expect(await sGovToken.balanceOf(addr1.address)).to.equal(0);
+			expect(await sGovToken.balanceOf(addr2.address)).to.equal(ethers.parseEther("100"));
 		});
 
 		it("should stop accumulating voting power after fully transferring stake (transferFrom)", async function () {
@@ -537,9 +598,11 @@ describe("Governance", function () {
 				await ethers.provider.send("evm_mine");
 			}
 
-			const expectedVP1 = await calculate_vp(addr1.address, 7201n);
+			await sGovToken.connect(addr1).approve(addr2.address, ethers.parseEther("100"));
 
-			await sGovToken.connect(addr1).transferFrom(addr1.address, addr2.address, ethers.parseEther("100"));
+			const expectedVP1 = await calculate_vp(addr1.address, 7202n);
+
+			await sGovToken.connect(addr2).transferFrom(addr1.address, addr2.address, ethers.parseEther("100"));
 
 			for (let i = 0; i < 7200; i++) {
 				await ethers.provider.send("evm_mine");
@@ -552,6 +615,9 @@ describe("Governance", function () {
 
 			expect(expectedVP1).to.equal(actualVP1);
 			expect(expectedVP2).to.equal(actualVP2);
+
+			expect(await sGovToken.balanceOf(addr1.address)).to.equal(0);
+			expect(await sGovToken.balanceOf(addr2.address)).to.equal(ethers.parseEther("100"));
 		});
 	});
 

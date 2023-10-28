@@ -31,7 +31,7 @@ contract Gov_Getters is Gov_State {
 	}
 
 	function get_pending_emissions(address user) external view returns (uint256) {
-		uint256 acc_emissions_per_share;
+		uint256 acc_emissions_per_share = _state.emission.acc_emissions_per_share;
 		if (block.number > _state.emission.last_emissions_block) {
 			uint256 blocks_elapsed = block.number - _state.emission.last_emissions_block;
 			uint256 emissions = blocks_elapsed * _state.emission.em_rate;
