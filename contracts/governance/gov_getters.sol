@@ -39,13 +39,9 @@ contract Gov_Getters is Gov_State {
 				acc_emissions_per_share += (emissions * 1e18) / _state.total_staked;
 			}
 		}
-		uint256 pending = ((_state.user_data[user].staked_balance * acc_emissions_per_share) / 1e18) - _state.user_data[user].emissions_debt;
+		uint256 pending = ((_state.user_data[user].staked_balance * acc_emissions_per_share) / 1e18) + _state.user_data[user].unclaimed_emissions - _state.user_data[user].emissions_debt;
 
 		return pending;
-	}
-
-	function get_user_vp(address user) external view returns (uint256) {
-		return _state.user_data[user].voting_power;
 	}
 
 	function get_total_vp() external view returns (uint256) {

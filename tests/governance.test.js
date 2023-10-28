@@ -99,7 +99,7 @@ describe("Governance", function () {
 		});
 	});
 
-	describe("emissions and voting power calculations", function () {
+	describe("emissions calculations", function () {
 		beforeEach(async function () {
 			await govToken.transfer(addr1.address, ethers.parseEther("100"));
 			await govToken.connect(addr1).approve(governance_address, ethers.parseEther("100"));
@@ -125,7 +125,7 @@ describe("Governance", function () {
 			expect(actualEmission).to.be.closeTo(estimatedEmissions, ethers.parseEther("0.001"));
 		});
 
-		it("should correctly generate emissions staking multiple users simultaeously", async function () {
+		it("should correctly generate emissions staking multiple users simultaneously", async function () {
 			// 7200 blocks is 24 hours
 			// Emission rate is set at around 1 token per day
 			// In this scenario, 1 token should be distributed equally among the users after 24 hours
@@ -309,52 +309,218 @@ describe("Governance", function () {
 
 			expect(totalEmission).to.be.closeTo(estimatedEmissions, ethers.parseEther("0.001"));
 		});
-		/*
+	});
+
+	describe("voting power calculations", function () {
+		beforeEach(async function () {
+			await govToken.transfer(addr1.address, ethers.parseEther("100"));
+			await govToken.connect(addr1).approve(governance_address, ethers.parseEther("100"));
+			await govToken.transfer(addr2.address, ethers.parseEther("100"));
+			await govToken.connect(addr2).approve(governance_address, ethers.parseEther("100"));
+			await govToken.transfer(addr3.address, ethers.parseEther("100"));
+			await govToken.connect(addr3).approve(governance_address, ethers.parseEther("100"));
+		});
+
 		it("should correctly generate voting power after staking", async function () {
 			await governance.connect(addr1).stake(ethers.parseEther("100"));
 
-			// Simulate some blocks
-			for (let i = 0; i < 10; i++) {
+			for (let i = 0; i < 7200; i++) {
 				await ethers.provider.send("evm_mine");
 			}
 
-			const blocksElapsed = 10n; // 10 blocks have passed
-			const blockRate = (blocksElapsed * ethers.parseEther("1")) / (await governance.get_vp_rate());
-			const expectedVP = (((blockRate * ethers.parseEther("100")) / (await governance.get_total_staked())) * 1000n) / ethers.parseEther("1");
+			const expectedVP = await calculate_vp(addr1.address, 7200n);
+			const actualVP = await governance.get_user_vp(addr1.address);
 
-			const actualVP = await calculate_vp(addr1.address, blocksElapsed);
-			expect(actualVP).to.equal(expectedVP);
+			expect(expectedVP).to.equal(actualVP);
 		});
-		
+
 		it("should correctly generate voting power after multiple stakes", async function () {
 			await governance.connect(addr1).stake(ethers.parseEther("100"));
 
-			// Simulate some blocks
-			for (let i = 0; i < 5; i++) {
+			for (let i = 0; i < 7200; i++) {
 				await ethers.provider.send("evm_mine");
 			}
+
+			let expectedVP = await calculate_vp(addr1.address, 7200n);
+
+			await govToken.transfer(addr1.address, ethers.parseEther("100"));
+			await govToken.connect(addr1).approve(governance_address, ethers.parseEther("100"));
+
+			expectedVP += await calculate_vp(addr1.address, 2n);
 
 			await governance.connect(addr1).stake(ethers.parseEther("100"));
 
-			for (let i = 0; i < 5; i++) {
+			expectedVP += await calculate_vp(addr1.address, 1n);
+
+			for (let i = 0; i < 7200; i++) {
 				await ethers.provider.send("evm_mine");
 			}
 
-			const blocksElapsed = 10n; // 10 blocks have passed
-			const blockRate = blocksElapsed * ethers.parseEther("1").div(await governance.get_vp_rate());
-			const expectedVP = blockRate
-				.mul(ethers.parseEther("200"))
-				.div(await governance.get_total_staked())
-				.mul(1000)
-				.div(ethers.parseEther("1"));
+			expectedVP += await calculate_vp(addr1.address, 7200n);
+			const actualVP = await governance.get_user_vp(addr1.address);
 
-			const actualVP = await calculate_vp(addr1.address, blocksElapsed);
-			expect(actualVP).to.equal(expectedVP);
-		});*/
+			expect(expectedVP).to.be.closeTo(actualVP, ethers.parseEther("1"));
+		});
+
+		it("should correctly generate voting power staking multiple users simultaneously", async function () {
+			await governance.connect(addr1).stake(ethers.parseEther("100"));
+			await governance.connect(addr2).stake(ethers.parseEther("100"));
+			await governance.connect(addr3).stake(ethers.parseEther("100"));
+
+			for (let i = 0; i < 7200; i++) {
+				await ethers.provider.send("evm_mine");
+			}
+
+			const expectedVP1 = await calculate_vp(addr1.address, 7200n);
+			const expectedVP2 = await calculate_vp(addr2.address, 7200n);
+			const expectedVP3 = await calculate_vp(addr3.address, 7200n);
+
+			const actualVP1 = await governance.get_user_vp(addr1.address);
+			const actualVP2 = await governance.get_user_vp(addr2.address);
+			const actualVP3 = await governance.get_user_vp(addr3.address);
+
+			expect(expectedVP1).to.be.closeTo(actualVP1, ethers.parseEther("1"));
+			expect(expectedVP2).to.be.closeTo(actualVP2, ethers.parseEther("1"));
+			expect(expectedVP3).to.be.closeTo(actualVP3, ethers.parseEther("1"));
+		});
+
+		it("should correctly generate voting power after multiple stakes by 3 different users at different blocks", async function () {
+			await governance.connect(addr1).stake(ethers.parseEther("100"));
+
+			for (let i = 0; i < 2400; i++) {
+				await ethers.provider.send("evm_mine");
+			}
+
+			let expectedVP1 = await calculate_vp(addr1.address, 2400n);
+
+			await governance.connect(addr2).stake(ethers.parseEther("100"));
+
+			for (let i = 0; i < 2400; i++) {
+				await ethers.provider.send("evm_mine");
+			}
+
+			let expectedVP2 = await calculate_vp(addr2.address, 2400n);
+
+			await governance.connect(addr3).stake(ethers.parseEther("100"));
+
+			for (let i = 0; i < 2400; i++) {
+				await ethers.provider.send("evm_mine");
+			}
+
+			let expectedVP3 = await calculate_vp(addr3.address, 2400n);
+			expectedVP1 += await calculate_vp(addr1.address, 4802n);
+
+			await governance.connect(addr1).unstake(ethers.parseEther("50"));
+
+			expectedVP1 += await calculate_vp(addr1.address, 1n);
+
+			for (let i = 0; i < 600; i++) {
+				await ethers.provider.send("evm_mine");
+			}
+
+			expectedVP2 += await calculate_vp(addr2.address, 3002n);
+
+			await governance.connect(addr2).unstake(ethers.parseEther("50"));
+
+			expectedVP2 += await calculate_vp(addr2.address, 1n);
+
+			for (let i = 0; i < 600; i++) {
+				await ethers.provider.send("evm_mine");
+			}
+
+			expectedVP3 += await calculate_vp(addr3.address, 1202n);
+
+			await governance.connect(addr3).unstake(ethers.parseEther("50"));
+
+			expectedVP3 += await calculate_vp(addr3.address, 1n);
+
+			for (let i = 0; i < 600; i++) {
+				await ethers.provider.send("evm_mine");
+			}
+
+			await govToken.connect(addr1).approve(governance_address, ethers.parseEther("50"));
+
+			expectedVP1 += await calculate_vp(addr1.address, 1803n);
+
+			await governance.connect(addr1).stake(ethers.parseEther("50"));
+
+			expectedVP1 += await calculate_vp(addr1.address, 1n);
+
+			for (let i = 0; i < 600; i++) {
+				await ethers.provider.send("evm_mine");
+			}
+
+			expectedVP3 += await calculate_vp(addr3.address, 1202n);
+
+			await governance.connect(addr3).unstake(ethers.parseEther("50"));
+
+			expectedVP3 += await calculate_vp(addr3.address, 1n);
+
+			for (let i = 0; i < 1200; i++) {
+				await ethers.provider.send("evm_mine");
+			}
+
+			expectedVP1 += await calculate_vp(addr1.address, 1801n);
+			expectedVP2 += await calculate_vp(addr2.address, 3004n);
+			expectedVP3 += await calculate_vp(addr3.address, 1200n);
+
+			const actualVP1 = await governance.get_user_vp(addr1.address);
+			const actualVP2 = await governance.get_user_vp(addr2.address);
+			const actualVP3 = await governance.get_user_vp(addr3.address);
+
+			expect(expectedVP1).to.be.closeTo(actualVP1, ethers.parseEther("1"));
+			expect(expectedVP2).to.be.closeTo(actualVP2, ethers.parseEther("1"));
+			expect(expectedVP3).to.be.closeTo(actualVP3, ethers.parseEther("1"));
+		});
+
+		it("should stop accumulating voting power after fully unstaking", async function () {
+			await governance.connect(addr1).stake(ethers.parseEther("100"));
+
+			for (let i = 0; i < 7200; i++) {
+				await ethers.provider.send("evm_mine");
+			}
+
+			const expectedVP = await calculate_vp(addr1.address, 7201n);
+
+			await governance.connect(addr1).unstake(ethers.parseEther("100"));
+
+			for (let i = 0; i < 7200; i++) {
+				await ethers.provider.send("evm_mine");
+			}
+
+			const actualVP = await governance.get_user_vp(addr1.address);
+
+			expect(expectedVP).to.equal(actualVP);
+		});
+
+		it("should stop accumulating voting power after fully transferring stake", async function () {
+			await governance.connect(addr1).stake(ethers.parseEther("100"));
+
+			for (let i = 0; i < 7200; i++) {
+				await ethers.provider.send("evm_mine");
+			}
+
+			const expectedVP1 = await calculate_vp(addr1.address, 7201n);
+
+			await sGovToken.connect(addr1).transfer(addr2.address, ethers.parseEther("100"));
+
+			for (let i = 0; i < 7200; i++) {
+				await ethers.provider.send("evm_mine");
+			}
+
+			const expectedVP2 = await calculate_vp(addr2.address, 7200n);
+
+			const actualVP1 = await governance.get_user_vp(addr1.address);
+			const actualVP2 = await governance.get_user_vp(addr2.address);
+
+			expect(expectedVP1).to.equal(actualVP1);
+			expect(expectedVP2).to.equal(actualVP2);
+		});
 	});
 
 	const calculate_vp = async (user, blocksElapsed) => {
-		const userStakedBalance = await governance.get_user_data(user)[1];
+		const userData = await governance.get_user_data(user);
+		const userStakedBalance = userData[1];
 		const vpRate = await governance.get_vp_rate();
 
 		const blockRate = (blocksElapsed * ethers.WeiPerEther) / vpRate;

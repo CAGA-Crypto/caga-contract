@@ -36,7 +36,7 @@ contract Governance is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeabl
 		_state.emission.last_emissions_block = block.number;
 
 		// there are 7200 blocks in 24 hours (12 secs per block)
-		// 720000 will give us 0.01 vp per day
+		// 720000 will give us 0.01 vp per day per staked token
 		_state.vp_rate = 720000;
 	}
 
@@ -77,19 +77,18 @@ contract Governance is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeabl
 
 		update_accumulated_emissions();
 
+		_state.user_data[user].emissions_debt += (amount * _state.emission.acc_emissions_per_share) / 1e18;
+
 		if (_state.user_data[user].is_staking) {
 			uint256 realised_vp = calculate_vp(user);
 			_state.user_data[user].voting_power += realised_vp;
 			_state.total_vp += realised_vp;
 		}
+		_state.user_data[user].last_vp_block = block.number;
 
 		_state.user_data[user].is_staking = true;
-		_state.total_staked += amount;
 		_state.user_data[user].staked_balance += amount;
-
-		_state.user_data[user].emissions_debt += (amount * _state.emission.acc_emissions_per_share) / 1e18;
-
-		_state.user_data[_msgSender()].last_vp_block = block.number;
+		_state.total_staked += amount;
 	}
 
 	function stake(uint256 amount) external nonReentrant {
@@ -102,7 +101,7 @@ contract Governance is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeabl
 	}
 
 	function _unstake(address user, uint256 amount) internal {
-		require(_state.user_data[user].is_staking && amount <= _state.user_data[user].staked_balance, "invalid unstake amount");
+		require(_state.user_data[user].is_staking && (amount <= _state.user_data[user].staked_balance), "invalid unstake amount");
 
 		update_accumulated_emissions();
 
@@ -110,13 +109,13 @@ contract Governance is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeabl
     	_state.user_data[user].unclaimed_emissions += acc_emissions - _state.user_data[user].emissions_debt;
 		_state.user_data[user].emissions_debt = acc_emissions - ((amount * _state.emission.acc_emissions_per_share) / 1e18);
 
-		_state.user_data[user].staked_balance -= amount;
-		_state.total_staked -= amount;
-
 		uint256 realised_vp = calculate_vp(user);
 		_state.user_data[user].voting_power += realised_vp;
 		_state.total_vp += realised_vp;
-		_state.user_data[_msgSender()].last_vp_block = block.number;
+		_state.user_data[user].last_vp_block = block.number;
+
+		_state.user_data[user].staked_balance -= amount;
+		_state.total_staked -= amount;
 
 		if (_state.user_data[user].staked_balance == 0) {
 			_state.user_data[user].is_staking = false;
@@ -138,22 +137,20 @@ contract Governance is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeabl
 		uint256 acc_emissions = (_state.user_data[_msgSender()].staked_balance * _state.emission.acc_emissions_per_share) / 1e18;
 		uint256 pending_emissions = acc_emissions + _state.user_data[_msgSender()].unclaimed_emissions - _state.user_data[_msgSender()].emissions_debt;
 
-		_state.user_data[_msgSender()].unclaimed_emissions = 0;
-
 		require((i_gov_token(_state.contracts.gov_token).balanceOf(address(this)) - _state.total_staked) >= pending_emissions, "insufficent emissions for distribution");
 
+		_state.user_data[_msgSender()].unclaimed_emissions = 0;
 		_state.user_data[_msgSender()].emissions_debt = acc_emissions;
-
-		uint256 realised_vp = calculate_vp(_msgSender());
-		_state.user_data[_msgSender()].voting_power += realised_vp;
-		_state.total_vp += realised_vp;
-		_state.user_data[_msgSender()].last_vp_block = block.number;
 
 		if (pending_emissions > 0) {
 			SafeERC20.safeTransfer(i_gov_token(_state.contracts.gov_token), _msgSender(), pending_emissions);
 		}
 
 		emit Claim_Rewards(_msgSender(), pending_emissions);
+	}
+
+	function get_user_vp(address user) external view returns (uint256) {
+		return _state.user_data[user].voting_power + calculate_vp(user);
 	}
 
 	function transfer_stake(address from, address to, uint256 amount) external nonReentrant onlySGovToken {

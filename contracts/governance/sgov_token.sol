@@ -52,18 +52,16 @@ contract sGov_Token is Initializable, ERC20Upgradeable, ERC20BurnableUpgradeable
 	}
 
 	function transfer(address to, uint256 amount) public override returns (bool) {
-		_transfer(_msgSender(), to, amount);
-
 		i_governance(protocol).transfer_stake(_msgSender(), to, amount);
+		_transfer(_msgSender(), to, amount);
 
 		return true;
 	}
 
 	function transferFrom(address from, address to, uint256 amount) public override returns (bool) {
+		i_governance(protocol).transfer_stake(from, to, amount);
 		_spendAllowance(from, _msgSender(), amount);
 		_transfer(from, to, amount);
-
-		i_governance(protocol).transfer_stake(from, to, amount);
 
 		return true;
 	}
