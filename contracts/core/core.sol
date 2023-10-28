@@ -174,7 +174,7 @@ contract Core is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeable, Cor
 		emit Distribute_Rewards(rewards, protocol_rewards);
 	}
 
-	function distribute_rewards() public nonReentrant {
+	function distribute_rewards() external nonReentrant {
 		_distribute_rewards();
 	}
 
