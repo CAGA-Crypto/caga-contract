@@ -60,7 +60,7 @@ describe("sGov_Token", function () {
 			await expect(sgov_token.burn(1000)).to.be.revertedWith("caller is not the protocol");
 		});
 
-		it("burn", async function () {
+		it("burnFrom", async function () {
 			await expect(sgov_token.burnFrom(account3.address, 1000)).to.be.revertedWith("caller is not the protocol");
 		});
 
