@@ -202,7 +202,7 @@ contract Core is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeable, Cor
 		// validate withdrawal_credentials is/are the same as withdrawal contract address
 		for (uint256 i = 0; i < withdrawal_credentials.length; i++) {
 			// Extract the address from the withdrawal_credentials
-			address extractedAddress = address(uint160(uint256(keccak256(slice(withdrawal_credentials[i], 12, 20)))));
+			address extractedAddress = address(uint160(bytes20(slice(withdrawal_credentials[i], 12, 20))));
 			require(extractedAddress == _state.contracts.withdraw, "invalid withdrawal credentials");
 		}
 		require(check_stakable(), "insufficient funds to stake to validator");
