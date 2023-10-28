@@ -2,7 +2,7 @@ const { ethers, upgrades } = require("hardhat");
 const { expect } = require("chai");
 
 describe("Governance", function () {
-	let governance, governance_address, owner, addr1, addr2, addr3, govToken, sGovToken, gov_token_address, sgov_token_address;
+	let Governance, Governance2, governance, governance_address, owner, addr1, addr2, addr3, govToken, sGovToken, gov_token_address, sgov_token_address;
 
 	beforeEach(async function () {
 		[owner, addr1, addr2, addr3] = await ethers.getSigners();
@@ -17,7 +17,8 @@ describe("Governance", function () {
 		await sGovToken.waitForDeployment();
 		sgov_token_address = await sGovToken.getAddress();
 
-		const Governance = await ethers.getContractFactory("Governance");
+		Governance = await ethers.getContractFactory("Governance");
+		Governance2 = await ethers.getContractFactory("Governance");
 		governance = await upgrades.deployProxy(Governance, [gov_token_address, sgov_token_address], { kind: "uups", redeployImplementation: "always" });
 		await governance.waitForDeployment();
 		governance_address = await governance.getAddress();
@@ -32,6 +33,18 @@ describe("Governance", function () {
 		it("should set the correct state variables", async function () {
 			expect(await governance.get_gov_token()).to.equal(gov_token_address);
 			expect(await governance.get_sgov_token()).to.equal(sgov_token_address);
+		});
+	});
+
+	describe("upgrade", function () {
+		it("should upgrade the contract", async function () {
+			const implementationAddress = await upgrades.erc1967.getImplementationAddress(governance_address);
+
+			const Proxy = await upgrades.upgradeProxy(governance_address, Governance2);
+			await Proxy.waitForDeployment();
+
+			const implementationAddress2 = await upgrades.erc1967.getImplementationAddress(governance_address);
+			expect(implementationAddress).to.not.equal(implementationAddress2);
 		});
 	});
 
@@ -493,7 +506,7 @@ describe("Governance", function () {
 			expect(expectedVP).to.equal(actualVP);
 		});
 
-		it("should stop accumulating voting power after fully transferring stake", async function () {
+		it("should stop accumulating voting power after fully transferring stake (transfer)", async function () {
 			await governance.connect(addr1).stake(ethers.parseEther("100"));
 
 			for (let i = 0; i < 7200; i++) {
@@ -503,6 +516,30 @@ describe("Governance", function () {
 			const expectedVP1 = await calculate_vp(addr1.address, 7201n);
 
 			await sGovToken.connect(addr1).transfer(addr2.address, ethers.parseEther("100"));
+
+			for (let i = 0; i < 7200; i++) {
+				await ethers.provider.send("evm_mine");
+			}
+
+			const expectedVP2 = await calculate_vp(addr2.address, 7200n);
+
+			const actualVP1 = await governance.get_user_vp(addr1.address);
+			const actualVP2 = await governance.get_user_vp(addr2.address);
+
+			expect(expectedVP1).to.equal(actualVP1);
+			expect(expectedVP2).to.equal(actualVP2);
+		});
+
+		it("should stop accumulating voting power after fully transferring stake (transferFrom)", async function () {
+			await governance.connect(addr1).stake(ethers.parseEther("100"));
+
+			for (let i = 0; i < 7200; i++) {
+				await ethers.provider.send("evm_mine");
+			}
+
+			const expectedVP1 = await calculate_vp(addr1.address, 7201n);
+
+			await sGovToken.connect(addr1).transferFrom(addr1.address, addr2.address, ethers.parseEther("100"));
 
 			for (let i = 0; i < 7200; i++) {
 				await ethers.provider.send("evm_mine");
