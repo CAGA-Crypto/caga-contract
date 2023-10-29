@@ -37,6 +37,7 @@ contract Core is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeable, Cor
 		_state.contracts.ls_token = ls_token;
 		_state.contracts.withdraw = withdraw_contract;
 		_state.contracts.abyss_eth2_depositor = abyss_eth2_depositor;
+		_state.operator = msg.sender;
 		_state.treasury = msg.sender;
 	}
 
@@ -44,6 +45,11 @@ contract Core is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeable, Cor
 
 	receive() external payable {
 		require(_msgSender() == _state.contracts.withdraw, "invalid sender");
+	}
+
+	modifier onlyOperator() {
+		require(_msgSender() == _state.operator, "caller is not the operator");
+		_;
 	}
 
 	// calculate the amount of ls tokens to mint based on the current exchange rate
@@ -203,7 +209,7 @@ contract Core is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeable, Cor
 		bytes[] calldata withdrawal_credentials,
 		bytes[] calldata signatures,
 		bytes32[] calldata deposit_data_roots
-	) external nonReentrant {
+	) external onlyOperator nonReentrant {
 		// validate withdrawal_credentials is/are the same as withdrawal contract address
 		for (uint256 i = 0; i < withdrawal_credentials.length; i++) {
 			// Extract the address from the withdrawal_credentials

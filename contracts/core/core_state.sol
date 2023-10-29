@@ -20,6 +20,7 @@ contract Core_Storage {
 	}
 
 	struct State {
+		address operator;
 		Constants constants;
 		Contracts contracts;
 		uint256 total_deposits; // total deposits + distributed rewards

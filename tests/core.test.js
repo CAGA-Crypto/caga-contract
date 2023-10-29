@@ -74,6 +74,21 @@ describe("Core", function () {
 		});
 	});
 
+	describe("set_operator", function () {
+		it("should set operator", async function () {
+			await core.set_operator(addr1.address);
+			expect(await core.get_operator()).to.equal(addr1.address);
+		});
+
+		it("should not set operator if not owner", async function () {
+			await expect(core.connect(addr1).set_operator(addr2.address)).to.be.revertedWith("Ownable: caller is not the owner");
+		});
+
+		it("should not set operator on zero address", async function () {
+			await expect(core.set_operator(ethers.ZeroAddress)).to.be.revertedWith("address cannot be 0");
+		});
+	});
+
 	describe("deposit", function () {
 		it("should deposit ETH and mint corresponding ls tokens", async function () {
 			const depositAmount = ethers.parseEther("1");

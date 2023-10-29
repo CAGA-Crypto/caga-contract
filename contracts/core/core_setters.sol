@@ -7,6 +7,10 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "./core_state.sol";
 
 contract Core_Setters is OwnableUpgradeable, Core_State {
+	function set_operator(address _operator) external onlyOwner non_zero_address(_operator) {
+		_state.operator = _operator;
+	}
+
 	function set_validator_capacity(uint256 _validator_capacity) external onlyOwner {
 		require(_validator_capacity > 0, "validator capacity must be greater than 0");
 

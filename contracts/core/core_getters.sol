@@ -5,6 +5,10 @@ pragma solidity ^0.8.21;
 import "./core_state.sol";
 
 contract Core_Getters is Core_State {
+	function get_operator() external view returns (address) {
+		return _state.operator;
+	}
+
 	function get_validator_capacity() external view returns (uint256) {
 		return _state.constants.validator_capacity;
 	}
