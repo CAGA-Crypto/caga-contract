@@ -132,6 +132,33 @@ describe("Core", function () {
 	});
 
 	describe("staking validators", function () {
+		it("should not be able to stake as non operator", async function () {
+			const mockData = [
+				{
+					pubkey: "0x996df2df8a0513891dec4e22228749f41aeae9c0a205c42bd69b8e3972479a371378859b8e35917b21a5328b78d3541c",
+					withdrawal_credentials: "0x010000000000000000000000" + withdraw_address.substring(2).toLowerCase(),
+					signature:
+						"0xa799c9aa2ae671ba4b381914cfb1d5557df34191c3a20f93866d567623371c4ce7b54ef9a55270a7148dab67a331a26304921e40a45d726f68b52136753bf45f1024ec2698d27e9f57089edad825e0d1b944c38def6eb3955038b7a089163090",
+					deposit_data_root: "0x34dcc0ce0ba81c1c3ac0f28039809fd323450e17f8930b7f13cd0256b467f084",
+				},
+				{
+					pubkey: "0x91407af7c79e494cbd231211533784ce8ac90711e1f40ce3fed63688835477d4abb5eae1241389dd406b56b57cde5684",
+					withdrawal_credentials: "0x010000000000000000000000" + withdraw_address.substring(2).toLowerCase(),
+					signature:
+						"0x91182d6b948c8827683cbc32c59051a40e646d78a0fe3124df31444be2de80c2aa51d0cdb3a7a00e8427b5170a19140b0b9ff98f5b4dbbedbb66d319f0b416ccf52ee265f638a79d061784c15510a5c917bddec0a28771e3f5cbc13311355ab1",
+					deposit_data_root: "0xb80aad5eb8aa8bacfc42b8243ca4ee72d5bb7275b22fa0e16a3e8c565fc7fffe",
+				},
+			];
+
+			const pubkeys = mockData.map((d) => d.pubkey);
+			const withdrawal_credentials = mockData.map((d) => d.withdrawal_credentials);
+			const signatures = mockData.map((d) => d.signature);
+			const deposit_data_roots = mockData.map((d) => d.deposit_data_root);
+			await expect(core.connect(addr2).stake_validators(pubkeys, withdrawal_credentials, signatures, deposit_data_roots)).to.be.revertedWith(
+				"caller is not the operator"
+			);
+		});
+
 		it("should stake 2 validators", async function () {
 			const depositAmount = ethers.parseEther("64");
 			await core.connect(addr1).deposit({ value: depositAmount });
