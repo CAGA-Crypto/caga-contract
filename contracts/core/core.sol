@@ -172,6 +172,9 @@ contract Core is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeable, Cor
 
 	function _distribute_rewards() internal {
 		(uint256 rewards, uint256 protocol_rewards) = get_wc_rewards();
+
+		if (rewards == 0) return;
+
 		_state.total_deposits += rewards;
 		_state.distributed_rewards += rewards;
 		_state.protocol_rewards += protocol_rewards;
