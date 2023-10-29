@@ -189,7 +189,7 @@ contract Core is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeable, Cor
 		_distribute_rewards();
 	}
 
-	function check_stakable() internal view returns (bool) {
+	function check_stakable() public view returns (bool) {
 		if (address(this).balance > (_state.withdrawals.withdraw_total + _state.protocol_float + _state.constants.validator_capacity)) {
 			return true;
 		}
@@ -207,6 +207,12 @@ contract Core is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeable, Cor
 		return b;
 	}
 
+	function calculate_stake_validators() public view returns (uint256) {
+		uint256 num_of_validators = (address(this).balance - _state.withdrawals.withdraw_total - _state.protocol_float) /
+			_state.constants.validator_capacity;
+		return num_of_validators;
+	}
+
 	function stake_validators(
 		bytes[] calldata pubkeys,
 		bytes[] calldata withdrawal_credentials,
@@ -221,8 +227,7 @@ contract Core is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeable, Cor
 		}
 		require(check_stakable(), "insufficient funds to stake to validator");
 
-		uint256 num_of_validators = (address(this).balance - _state.withdrawals.withdraw_total - _state.protocol_float) /
-			_state.constants.validator_capacity;
+		uint256 num_of_validators = calculate_stake_validators();
 		if (num_of_validators == 0) {
 			// scenario should not happen
 			revert("insufficient funds to deposit for validator(s)");
