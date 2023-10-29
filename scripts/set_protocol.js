@@ -25,7 +25,6 @@ async function main() {
 	console.log("Withdraw protocol set to:", await Withdraw_Proxy.protocol());
 
 	// Deploy Governance contracts
-	const Gov_Token = await get_contract("Gov_Token", process.env.GOV_TOKEN);
 	const sGov_Token = await get_contract("sGov_Token", process.env.SGOV_TOKEN);
 	const Governance = await get_contract("Governance", process.env.GOVERNANCE);
 	const governance_address = await Governance.getAddress();
