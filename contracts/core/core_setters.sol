@@ -48,6 +48,15 @@ contract Core_Setters is OwnableUpgradeable, Core_State {
 		_state.protocol_float = _protocol_float;
 	}
 
+	// should only be used if we somehow unstaked from validators without user withdrawals
+	function add_unstaked_validators(uint256 _unstaked_validators) external onlyOwner {
+		_state.withdrawals.unstaked_validators += _unstaked_validators;
+	}
+	function sub_unstaked_validators(uint256 _unstaked_validators) external onlyOwner {
+		_state.withdrawals.unstaked_validators -= _unstaked_validators;
+	}
+
+	// should only be used if we are somehow redeploying the contract and reusing the previous validator mnemonic
 	function set_validator_index(uint256 _validator_index) external onlyOwner {
 		_state.validator_index = _validator_index;
 	}

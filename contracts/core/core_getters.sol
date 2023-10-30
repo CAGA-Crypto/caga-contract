@@ -25,11 +25,23 @@ contract Core_Getters is Core_State {
 		return _state.contracts.abyss_eth2_depositor;
 	}
 
+	function get_user_withdrawal(address user) external view returns (uint256) {
+		return _state.withdrawals.withdraw_account[user];
+	}
+
+	function get_total_withdrawals() external view returns (uint256) {
+		return _state.withdrawals.withdraw_total;
+	}
+
+	function get_unstaked_validators() external view returns (uint256) {
+		return _state.withdrawals.unstaked_validators;
+	}
+
 	// get withdraw contract rewards and protocol rewards
 	// calculates rewards not moved to the core contract yet
 	function get_wc_rewards() public view returns (uint256, uint256) {
 		uint256 rewards;
-		if (_state.withdrawals.withdraw_total > 0) {
+		if (_state.withdrawals.withdraw_total > 0 || _state.withdrawals.unstaked_validators > 0) {
 			uint256 unstaked_validators;
 			if (_state.contracts.withdraw.balance > 0) {
 				unstaked_validators = _state.contracts.withdraw.balance / _state.constants.validator_capacity;
@@ -61,6 +73,11 @@ contract Core_Getters is Core_State {
 
 	function get_protocol_fee_percentage() external view returns (uint256) {
 		return _state.protocol_fee_percentage;
+	}
+
+	function get_protocol_rewards() external view returns (uint256) {
+		(, uint256 protocol_reward) = get_wc_rewards();
+		return _state.protocol_rewards + protocol_reward;
 	}
 
 	function get_protocol_float() external view returns (uint256) {
