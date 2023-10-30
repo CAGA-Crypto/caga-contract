@@ -157,7 +157,12 @@ contract Core is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeable, Cor
 			// move unstaked ETH from withdraw contract to core contract to ensure withdraw contract funds are not mixed with rewards
 			uint256 unstaked_validators = _state.contracts.withdraw.balance / _state.constants.validator_capacity;
 			if (unstaked_validators > 0) {
-				_state.withdrawals.unstaked_validators -= unstaked_validators;
+				if (unstaked_validators > _state.withdrawals.unstaked_validators) {
+					// We unstaked more validators than we should have?!?!
+					_state.withdrawals.unstaked_validators = 0;
+				} else {
+					_state.withdrawals.unstaked_validators -= unstaked_validators;
+				}
 				uint256 unstaked_amount = unstaked_validators * _state.constants.validator_capacity;
 				i_withdraw(_state.contracts.withdraw).protocol_withdraw(unstaked_amount);
 
