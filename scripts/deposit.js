@@ -12,7 +12,7 @@ async function get_contract(contract_name, contract_address) {
 async function main() {
 	const Core_Proxy = await get_contract("Core", process.env.CORE);
 	try {
-		await Core_Proxy.deposit({ value: ethers.parseEther("64.01") });
+		await Core_Proxy.deposit({ value: ethers.parseEther("64") });
 	} catch (error) {
 		console.error("An error occurred while making the deposit:", error);
 		if (error.data) {
