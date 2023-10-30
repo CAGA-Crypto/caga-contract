@@ -98,6 +98,7 @@ contract Core is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeable, Cor
 	function request_withdraw(uint256 amount) external nonReentrant {
 		require(amount > 0, "withdraw amount must be greater than 0");
 		require(i_ls_token(_state.contracts.ls_token).balanceOf(_msgSender()) >= amount, "insufficient balance");
+		require(_state.withdrawals.withdraw_account[_msgSender()] == 0, "previous withdrawal request not claimed");
 
 		uint256 withdraw_amount = calculate_withdraw(amount);
 		uint256 core_withdraw_eth = address(this).balance + _state.contracts.withdraw.balance - _state.withdrawals.withdraw_total;
