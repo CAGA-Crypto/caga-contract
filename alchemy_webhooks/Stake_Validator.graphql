@@ -1,0 +1,43 @@
+{
+	block {
+		hash
+		number
+		timestamp
+		logs(
+			filter: {
+				addresses: ["0x13d5D2e633a33B9eD9D6e68F16B9cB93f17a8aDe"]
+				topics: ["0x09c657104d3addea5d129b95f9e78488791b359ca2b44c5f636a5c223bab4364"]
+			}
+		) {
+			data
+			topics
+			index
+			account {
+				address
+			}
+			transaction {
+				hash
+				nonce
+				index
+				from {
+					address
+				}
+				to {
+					address
+				}
+				value
+				gasPrice
+				maxFeePerGas
+				maxPriorityFeePerGas
+				gas
+				status
+				gasUsed
+				cumulativeGasUsed
+				effectiveGasPrice
+				createdContract {
+					address
+				}
+			}
+		}
+	}
+}
