@@ -64,8 +64,7 @@ contract Governance is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeabl
 	// vp is calculated to 3 decimal places
 	function calculate_vp(address user) internal view returns (uint256) {
 		uint256 blocks_elapsed = (block.number - _state.user_data[user].last_vp_block) * 1e18;
-		uint256 block_rate = blocks_elapsed / _state.vp_rate;
-		uint256 vp = ((_state.user_data[user].staked_balance * block_rate) * 1000) / 1e18;
+		uint256 vp = ((_state.user_data[user].staked_balance * blocks_elapsed) * 1000) / _state.vp_rate / 1e18;
 
 		return vp;
 	}
