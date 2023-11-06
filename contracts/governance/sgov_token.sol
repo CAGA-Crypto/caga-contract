@@ -12,6 +12,7 @@ import "../interfaces/i_governance.sol";
 
 contract sGov_Token is Initializable, ERC20Upgradeable, ERC20BurnableUpgradeable, OwnableUpgradeable, ERC20PermitUpgradeable, UUPSUpgradeable {
 	address public protocol;
+	uint256[50] __gap;
 
 	/// @custom:oz-upgrades-unsafe-allow constructor
 	constructor() {

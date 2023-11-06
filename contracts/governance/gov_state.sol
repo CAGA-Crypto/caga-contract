@@ -30,6 +30,7 @@ contract Gov_Storage {
 		uint256 total_staked;
 		uint256 vp_rate;
 		uint256 total_vp;
+		uint256[50] __gap;
 	}
 }
 

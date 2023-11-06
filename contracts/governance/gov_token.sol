@@ -12,6 +12,7 @@ import "../interfaces/i_Antisnipe.sol";
 contract Gov_Token is Initializable, ERC20Upgradeable, ERC20PermitUpgradeable, OwnableUpgradeable, UUPSUpgradeable {
 	IAntisnipe public antisnipe;
 	bool public antisnipeDisable;
+	uint256[50] __gap;
 
 	/// @custom:oz-upgrades-unsafe-allow constructor
 	constructor() {

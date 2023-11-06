@@ -7,6 +7,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 contract Withdraw is Initializable, OwnableUpgradeable, UUPSUpgradeable {
 	address public protocol;
+	uint256[50] __gap;
 
 	/// @custom:oz-upgrades-unsafe-allow constructor
 	constructor() {

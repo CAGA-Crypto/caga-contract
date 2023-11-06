@@ -10,6 +10,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 contract LS_Token is Initializable, ERC20Upgradeable, ERC20BurnableUpgradeable, OwnableUpgradeable, ERC20PermitUpgradeable, UUPSUpgradeable {
 	address public protocol;
+	uint256[50] __gap;
 
 	/// @custom:oz-upgrades-unsafe-allow constructor
 	constructor() {
