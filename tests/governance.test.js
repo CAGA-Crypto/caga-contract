@@ -637,8 +637,7 @@ describe("Governance", function () {
 		const userStakedBalance = userData[1];
 		const vpRate = await governance.get_vp_rate();
 
-		const blockRate = (blocksElapsed * ethers.WeiPerEther) / vpRate;
-		const vp = (userStakedBalance * blockRate * 1000n) / ethers.WeiPerEther;
+		const vp = (userStakedBalance * (blocksElapsed * ethers.WeiPerEther) * 1000n) / vpRate / ethers.WeiPerEther;
 
 		return vp;
 	};
