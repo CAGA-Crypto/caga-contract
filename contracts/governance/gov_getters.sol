@@ -22,6 +22,10 @@ contract Gov_Getters is Gov_State {
 		return _state.vp_rate;
 	}
 
+	function get_all_stakers() public view returns (address[] memory) {
+        return _state.stakers;
+    }
+
 	function get_user_data(address user) external view returns (Gov_Storage.User_Data memory) {
 		return _state.user_data[user];
 	}
@@ -44,7 +48,7 @@ contract Gov_Getters is Gov_State {
 		return pending;
 	}
 
-	function get_total_vp() external view returns (uint256) {
+	function get_unpending_vp() external view returns (uint256) {
 		return _state.total_vp;
 	}
 }

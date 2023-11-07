@@ -464,6 +464,7 @@ describe("Governance", function () {
 			expect(expectedVP1).to.be.closeTo(actualVP1, ethers.parseEther("1"));
 			expect(expectedVP2).to.be.closeTo(actualVP2, ethers.parseEther("1"));
 			expect(expectedVP3).to.be.closeTo(actualVP3, ethers.parseEther("1"));
+			expect(actualVP1 + actualVP2 + actualVP3).to.be.closeTo(await governance.get_total_vp(), ethers.parseEther("1"));
 		});
 
 		it("should correctly generate voting power after multiple stakes by 3 different users at different blocks", async function () {
@@ -629,6 +630,7 @@ describe("Governance", function () {
 
 			expect(await sGovToken.balanceOf(addr1.address)).to.equal(0);
 			expect(await sGovToken.balanceOf(addr2.address)).to.equal(ethers.parseEther("100"));
+			expect(actualVP1 + actualVP2).to.be.closeTo(await governance.get_total_vp(), ethers.parseEther("1"));
 		});
 	});
 

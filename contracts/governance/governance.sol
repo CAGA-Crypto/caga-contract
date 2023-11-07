@@ -78,6 +78,11 @@ contract Governance is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeabl
 
 		_state.user_data[user].emissions_debt += (amount * _state.emission.acc_emissions_per_share) / 1e18;
 
+		if (_state.user_data[user].staked_balance == 0) {
+            _state.stakers.push(user);
+            _state.staker_index[user] = _state.stakers.length;
+        }
+
 		if (_state.user_data[user].is_staking) {
 			uint256 realised_vp = calculate_vp(user);
 			_state.user_data[user].voting_power += realised_vp;
@@ -118,6 +123,16 @@ contract Governance is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeabl
 
 		if (_state.user_data[user].staked_balance == 0) {
 			_state.user_data[user].is_staking = false;
+
+			uint256 index = _state.staker_index[user] - 1;
+			uint256 last_index = _state.stakers.length - 1;
+			if (index != last_index) {
+                address lastUser = _state.stakers[last_index];
+                _state.stakers[index] = lastUser;
+                _state.staker_index[lastUser] = index + 1;
+            }
+            _state.stakers.pop();
+            delete _state.staker_index[user];
 		}
 	}
 
@@ -150,6 +165,16 @@ contract Governance is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeabl
 
 	function get_user_vp(address user) external view returns (uint256) {
 		return _state.user_data[user].voting_power + calculate_vp(user);
+	}
+
+	function get_total_vp() external view returns (uint256) {
+		uint256 total_vp = _state.total_vp;
+        address[] memory users = get_all_stakers();
+        for (uint256 i = 0; i < users.length; i++) {
+            total_vp += calculate_vp(users[i]);
+        }
+
+        return total_vp;
 	}
 
 	function transfer_stake(address from, address to, uint256 amount) external nonReentrant onlySGovToken {

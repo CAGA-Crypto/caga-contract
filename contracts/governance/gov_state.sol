@@ -25,6 +25,8 @@ contract Gov_Storage {
 
 	struct State {
 		Contracts contracts;
+		address[] stakers;
+		mapping(address => uint256) staker_index; // + 1 to distinguish from default value 0
 		mapping(address => User_Data) user_data;
 		Emission emission;
 		uint256 total_staked;
