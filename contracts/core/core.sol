@@ -101,7 +101,12 @@ contract Core is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeable, Cor
 		require(_state.withdrawals.withdraw_account[_msgSender()] == 0, "previous withdrawal request not claimed");
 
 		uint256 withdraw_amount = calculate_withdraw(amount);
-		uint256 core_withdraw_eth = address(this).balance + _state.contracts.withdraw.balance - _state.withdrawals.withdraw_total;
+		uint256 core_withdraw_eth;
+		if (_state.withdrawals.withdraw_total > (address(this).balance + _state.contracts.withdraw.balance)) {
+			core_withdraw_eth = 0;
+		} else {
+			core_withdraw_eth = address(this).balance + _state.contracts.withdraw.balance - _state.withdrawals.withdraw_total;
+		}
 
 		emit Withdraw_Request(_msgSender(), withdraw_amount);
 
