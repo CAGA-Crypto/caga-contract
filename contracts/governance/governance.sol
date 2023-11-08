@@ -35,6 +35,9 @@ contract Governance is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeabl
 		_state.emission.em_rate =  uint256(1e18) / 7200;
 		_state.emission.last_emissions_block = block.number;
 
+		_state.protocol_fee_percentage = 1000000000; // 10% (8 decimals)
+		_state.treasury = msg.sender;
+
 		// there are 7200 blocks in 24 hours (12 secs per block)
 		// 720000 will give us 0.01 vp per day per staked token
 		_state.vp_rate = 720000;
@@ -157,7 +160,11 @@ contract Governance is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeabl
 		_state.user_data[_msgSender()].emissions_debt = acc_emissions;
 
 		if (pending_emissions > 0) {
-			SafeERC20.safeTransfer(i_gov_token(_state.contracts.gov_token), _msgSender(), pending_emissions);
+			// calculate protocol reward
+			uint256 protocol_reward = (pending_emissions * _state.protocol_fee_percentage) / 10000000000;
+			uint256 user_reward = pending_emissions - protocol_reward;
+			SafeERC20.safeTransfer(i_gov_token(_state.contracts.gov_token), _msgSender(), user_reward);
+			SafeERC20.safeTransfer(i_gov_token(_state.contracts.gov_token), _state.treasury, protocol_reward);
 		}
 
 		emit Claim_Rewards(_msgSender(), pending_emissions);

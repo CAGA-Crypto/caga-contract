@@ -7,6 +7,11 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "./gov_state.sol";
 
 contract Gov_Setters is OwnableUpgradeable, Gov_State {
+	modifier non_zero_address(address _address) {
+		require(_address != address(0), "address cannot be 0");
+		_;
+	}
+
 	function set_gov_token(address _gov_token) external onlyOwner {
 		_state.contracts.gov_token = _gov_token;
 	}
@@ -21,5 +26,9 @@ contract Gov_Setters is OwnableUpgradeable, Gov_State {
 
 	function set_vp_rate(uint256 _vp_rate) external onlyOwner {
 		_state.vp_rate = _vp_rate;
+	}
+
+	function set_treasury_address(address _treasury) external onlyOwner non_zero_address(_treasury) {
+		_state.treasury = _treasury;
 	}
 }

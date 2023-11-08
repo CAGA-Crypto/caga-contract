@@ -14,6 +14,14 @@ contract Gov_Getters is Gov_State {
 		return _state.contracts.sgov_token;
 	}
 
+	function get_treasury_address() external view returns (address) {
+		return _state.treasury;
+	}
+
+	function get_protocol_fee_percentage() external view returns (uint256) {
+		return _state.protocol_fee_percentage;
+	}
+
 	function get_emission_rate() external view returns (uint256) {
 		return _state.emission.em_rate;
 	}

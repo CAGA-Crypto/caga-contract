@@ -14,9 +14,10 @@ describe("Governance", function () {
 	let sGovToken;
 	let gov_token_address;
 	let sgov_token_address;
+	let treasury_address;
 
 	beforeEach(async function () {
-		[owner, addr1, addr2, addr3] = await ethers.getSigners();
+		[owner, treasury_address, addr1, addr2, addr3] = await ethers.getSigners();
 
 		const Gov_Token = await ethers.getContractFactory("Gov_Token");
 		govToken = await upgrades.deployProxy(Gov_Token, [], { kind: "uups", redeployImplementation: "always" });
@@ -35,6 +36,7 @@ describe("Governance", function () {
 		governance_address = await governance.getAddress();
 
 		await sGovToken.set_protocol(governance_address);
+		await governance.set_treasury_address(treasury_address);
 
 		// Fund governance contract with 1 billion tokens
 		await govToken.transfer(governance_address, ethers.parseEther("10000000000"));
@@ -101,7 +103,10 @@ describe("Governance", function () {
 			const estimatedEmissions = blocksElapsed * (await governance.get_emission_rate());
 			const actualEmission = await govToken.balanceOf(addr1.address);
 
-			expect(actualEmission).to.be.closeTo(estimatedEmissions, ethers.parseEther("0.001"));
+			const calculatedProtocolFee = (estimatedEmissions * (await governance.get_protocol_fee_percentage())) / 10000000000n;
+			const calculatedEstimatedEmission = estimatedEmissions - calculatedProtocolFee;
+
+			expect(actualEmission).to.be.closeTo(calculatedEstimatedEmission, ethers.parseEther("0.001"));
 		});
 	});
 
@@ -144,9 +149,13 @@ describe("Governance", function () {
 
 			const blocksElapsed = 7201n;
 			const estimatedEmissions = blocksElapsed * (await governance.get_emission_rate());
+
+			const calculatedProtocolFee = (estimatedEmissions * (await governance.get_protocol_fee_percentage())) / 10000000000n;
+			const calculatedEstimatedEmission = estimatedEmissions - calculatedProtocolFee;
+
 			const actualEmission = await govToken.balanceOf(addr1.address);
 
-			expect(actualEmission).to.be.closeTo(estimatedEmissions, ethers.parseEther("0.001"));
+			expect(actualEmission).to.be.closeTo(calculatedEstimatedEmission, ethers.parseEther("0.001"));
 		});
 
 		it("should correctly generate emissions staking multiple users simultaneously", async function () {
@@ -179,7 +188,10 @@ describe("Governance", function () {
 			const blocksElapsed = 7203n;
 			const estimatedEmissions = blocksElapsed * (await governance.get_emission_rate());
 
-			expect(totalEmission).to.be.closeTo(estimatedEmissions, ethers.parseEther("0.001"));
+			const calculatedProtocolFee = (estimatedEmissions * (await governance.get_protocol_fee_percentage())) / 10000000000n;
+			const calculatedEstimatedEmission = estimatedEmissions - calculatedProtocolFee;
+
+			expect(totalEmission).to.be.closeTo(calculatedEstimatedEmission, ethers.parseEther("0.001"));
 		});
 
 		it("should correctly generate emissions after multiple stakes by 3 different users at different blocks", async function () {
@@ -221,7 +233,10 @@ describe("Governance", function () {
 			const blocksElapsed = 7205n;
 			const estimatedEmissions = blocksElapsed * (await governance.get_emission_rate());
 
-			expect(totalEmission).to.be.closeTo(estimatedEmissions, ethers.parseEther("0.001"));
+			const calculatedProtocolFee = (estimatedEmissions * (await governance.get_protocol_fee_percentage())) / 10000000000n;
+			const calculatedEstimatedEmission = estimatedEmissions - calculatedProtocolFee;
+
+			expect(totalEmission).to.be.closeTo(calculatedEstimatedEmission, ethers.parseEther("0.001"));
 		});
 
 		it("should correctly generate emissions after multiple stakes", async function () {
@@ -245,9 +260,13 @@ describe("Governance", function () {
 
 			const blocksElapsed = 14404n;
 			const estimatedEmissions = blocksElapsed * (await governance.get_emission_rate());
+
+			const calculatedProtocolFee = (estimatedEmissions * (await governance.get_protocol_fee_percentage())) / 10000000000n;
+			const calculatedEstimatedEmission = estimatedEmissions - calculatedProtocolFee;
+
 			const actualEmission = await govToken.balanceOf(addr1.address);
 
-			expect(actualEmission).to.be.closeTo(estimatedEmissions, ethers.parseEther("0.001"));
+			expect(actualEmission).to.be.closeTo(calculatedEstimatedEmission, ethers.parseEther("0.001"));
 		});
 
 		it("should correctly generate emissions with multiple users staking and unstaking in various orders", async function () {
@@ -331,7 +350,10 @@ describe("Governance", function () {
 			const blocksElapsed = 7211n;
 			const estimatedEmissions = blocksElapsed * (await governance.get_emission_rate());
 
-			expect(totalEmission).to.be.closeTo(estimatedEmissions, ethers.parseEther("0.001"));
+			const calculatedProtocolFee = (estimatedEmissions * (await governance.get_protocol_fee_percentage())) / 10000000000n;
+			const calculatedEstimatedEmission = estimatedEmissions - calculatedProtocolFee;
+
+			expect(totalEmission).to.be.closeTo(calculatedEstimatedEmission, ethers.parseEther("0.001"));
 		});
 
 		it("should stop accumulating emissions after fully transferring stake (transfer)", async function () {
@@ -355,8 +377,12 @@ describe("Governance", function () {
 			await governance.connect(addr1).claim();
 			expect(await govToken.balanceOf(addr1.address)).to.equal(balance1);
 
-			const estimatedEmissions2 = 7201n * (await governance.get_emission_rate()) + ethers.parseEther("100");
-			expect(await govToken.balanceOf(addr2.address)).to.be.closeTo(estimatedEmissions2, ethers.parseEther("0.001"));
+			const estimatedEmissions2 = 7201n * (await governance.get_emission_rate());
+
+			const calculatedProtocolFee = (estimatedEmissions2 * (await governance.get_protocol_fee_percentage())) / 10000000000n;
+			const calculatedEstimatedEmission = estimatedEmissions2 - calculatedProtocolFee + ethers.parseEther("100");
+
+			expect(await govToken.balanceOf(addr2.address)).to.be.closeTo(calculatedEstimatedEmission, ethers.parseEther("0.001"));
 
 			expect(await sGovToken.balanceOf(addr1.address)).to.equal(0);
 			expect(await sGovToken.balanceOf(addr2.address)).to.equal(ethers.parseEther("100"));
@@ -385,8 +411,12 @@ describe("Governance", function () {
 			await governance.connect(addr1).claim();
 			expect(await govToken.balanceOf(addr1.address)).to.equal(balance1);
 
-			const estimatedEmissions2 = 7201n * (await governance.get_emission_rate()) + ethers.parseEther("100");
-			expect(await govToken.balanceOf(addr2.address)).to.be.closeTo(estimatedEmissions2, ethers.parseEther("0.001"));
+			const estimatedEmissions2 = 7201n * (await governance.get_emission_rate());
+
+			const calculatedProtocolFee = (estimatedEmissions2 * (await governance.get_protocol_fee_percentage())) / 10000000000n;
+			const calculatedEstimatedEmission = estimatedEmissions2 - calculatedProtocolFee + ethers.parseEther("100");
+
+			expect(await govToken.balanceOf(addr2.address)).to.be.closeTo(calculatedEstimatedEmission, ethers.parseEther("0.001"));
 
 			expect(await sGovToken.balanceOf(addr1.address)).to.equal(0);
 			expect(await sGovToken.balanceOf(addr2.address)).to.equal(ethers.parseEther("100"));

@@ -25,6 +25,8 @@ contract Gov_Storage {
 
 	struct State {
 		Contracts contracts;
+		address treasury;
+		uint256 protocol_fee_percentage; // percentage of rewards to be distributed to protocol
 		address[] stakers;
 		mapping(address => uint256) staker_index; // + 1 to distinguish from default value 0
 		mapping(address => User_Data) user_data;
