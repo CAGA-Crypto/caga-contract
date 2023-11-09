@@ -66,7 +66,12 @@ contract Governance is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeabl
 
 	// vp is calculated to 3 decimal places
 	function calculate_vp(address user) internal view returns (uint256) {
-		uint256 blocks_elapsed = (block.number - _state.user_data[user].last_vp_block) * 1e18;
+		uint256 blocks_elapsed;
+		if (_state.user_data[user].is_staking) {
+			blocks_elapsed = (block.number - _state.user_data[user].last_vp_block) * 1e18;
+		} else {
+			blocks_elapsed = 0;
+		}
 		uint256 vp = ((_state.user_data[user].staked_balance * blocks_elapsed) * 1000) / _state.vp_rate / 1e18;
 
 		return vp;
@@ -126,16 +131,6 @@ contract Governance is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeabl
 
 		if (_state.user_data[user].staked_balance == 0) {
 			_state.user_data[user].is_staking = false;
-
-			uint256 index = _state.staker_index[user] - 1;
-			uint256 last_index = _state.stakers.length - 1;
-			if (index != last_index) {
-                address lastUser = _state.stakers[last_index];
-                _state.stakers[index] = lastUser;
-                _state.staker_index[lastUser] = index + 1;
-            }
-            _state.stakers.pop();
-            delete _state.staker_index[user];
 		}
 	}
 
