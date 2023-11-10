@@ -604,6 +604,7 @@ describe("Governance", function () {
 			const actualVP = await governance.get_user_vp(addr1.address);
 
 			expect(expectedVP).to.equal(actualVP);
+			expect(actualVP).to.equal(await governance.get_total_vp());
 		});
 
 		it("should stop accumulating voting power after fully transferring stake (transfer)", async function () {
@@ -628,6 +629,7 @@ describe("Governance", function () {
 
 			expect(expectedVP1).to.equal(actualVP1);
 			expect(expectedVP2).to.equal(actualVP2);
+			expect(actualVP1 + actualVP2).to.be.equal(await governance.get_total_vp());
 
 			expect(await sGovToken.balanceOf(addr1.address)).to.equal(0);
 			expect(await sGovToken.balanceOf(addr2.address)).to.equal(ethers.parseEther("100"));
@@ -657,6 +659,7 @@ describe("Governance", function () {
 
 			expect(expectedVP1).to.equal(actualVP1);
 			expect(expectedVP2).to.equal(actualVP2);
+			expect(actualVP1 + actualVP2).to.be.equal(await governance.get_total_vp());
 
 			expect(await sGovToken.balanceOf(addr1.address)).to.equal(0);
 			expect(await sGovToken.balanceOf(addr2.address)).to.equal(ethers.parseEther("100"));

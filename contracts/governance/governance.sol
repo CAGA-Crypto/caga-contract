@@ -165,15 +165,15 @@ contract Governance is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeabl
 		emit Claim_Rewards(_msgSender(), pending_emissions);
 	}
 
-	function get_user_vp(address user) external view returns (uint256) {
+	function get_user_vp(address user) public view returns (uint256) {
 		return _state.user_data[user].voting_power + calculate_vp(user);
 	}
 
 	function get_total_vp() external view returns (uint256) {
-		uint256 total_vp = _state.total_vp;
+		uint256 total_vp;
         address[] memory users = get_all_stakers();
         for (uint256 i = 0; i < users.length; i++) {
-            total_vp += calculate_vp(users[i]);
+            total_vp += get_user_vp(users[i]);
         }
 
         return total_vp;
