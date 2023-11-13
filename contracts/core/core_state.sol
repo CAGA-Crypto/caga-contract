@@ -31,10 +31,10 @@ contract Core_Storage {
 		uint256 protocol_rewards; // protocol rewards collected from distributing rewards
 		uint256 protocol_float;
 		uint256 validator_index;
-		uint256[50] __gap;
 	}
 }
 
 contract Core_State {
 	Core_Storage.State _state;
+	uint256[50] __gap;
 }

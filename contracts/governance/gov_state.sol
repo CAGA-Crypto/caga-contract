@@ -34,10 +34,10 @@ contract Gov_Storage {
 		uint256 total_staked;
 		uint256 vp_rate;
 		uint256 total_vp;
-		uint256[50] __gap;
 	}
 }
 
 contract Gov_State {
 	Gov_Storage.State _state;
+	uint256[50] __gap;
 }
