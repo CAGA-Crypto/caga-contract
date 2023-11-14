@@ -31,4 +31,8 @@ contract Gov_Setters is OwnableUpgradeable, Gov_State {
 	function set_treasury_address(address _treasury) external onlyOwner non_zero_address(_treasury) {
 		_state.treasury = _treasury;
 	}
+
+	function set_protocol_fee_percentage(uint256 _protocol_fee_percentage) external onlyOwner {
+		_state.protocol_fee_percentage = _protocol_fee_percentage;
+	}
 }
